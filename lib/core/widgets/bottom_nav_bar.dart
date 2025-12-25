@@ -27,7 +27,6 @@ class BottomNavBar extends StatelessWidget {
       label: 'AI Agent',
       hasBadge: true,
     ),
-    BottomNavItem(icon: Icons.more_horiz, label: 'More'),
   ];
 
   @override

@@ -50,7 +50,6 @@ class _DashboardPageState extends State<DashboardPage> {
       onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
       onOutletTap: _showOutletPicker,
       onLightBulbTap: () {},
-      onNotificationTap: () {},
     );
   }
 

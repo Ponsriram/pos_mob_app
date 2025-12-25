@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_app/core/providers/theme_provider.dart';
+import 'package:pos_app/features/dashboard/view/pages/notification_page.dart';
 
 /// Custom app bar for the dashboard screen
-class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
+class DashboardAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String selectedOutlet;
   final VoidCallback onMenuTap;
   final VoidCallback? onOutletTap;
   final VoidCallback? onLightBulbTap;
-  final VoidCallback? onNotificationTap;
 
   const DashboardAppBar({
     super.key,
@@ -14,36 +16,35 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onMenuTap,
     this.onOutletTap,
     this.onLightBulbTap,
-    this.onNotificationTap,
   });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final themeNotifier = ref.read(themeModeNotifierProvider.notifier);
+
     return AppBar(
       backgroundColor: colorScheme.surface,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      leading: _buildMenuButton(context),
-      title: _buildOutletSelector(context),
+      leading: _buildMenuButton(context, colorScheme),
+      title: _buildOutletSelector(context, colorScheme),
       titleSpacing: 0,
-      actions: _buildActions(context),
+      actions: _buildActions(context, colorScheme, themeNotifier),
     );
   }
 
-  Widget _buildMenuButton(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildMenuButton(BuildContext context, ColorScheme colorScheme) {
     return IconButton(
       onPressed: onMenuTap,
       icon: Icon(Icons.menu, color: colorScheme.primary),
     );
   }
 
-  Widget _buildOutletSelector(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildOutletSelector(BuildContext context, ColorScheme colorScheme) {
     return GestureDetector(
       onTap: onOutletTap,
       child: Container(
@@ -75,15 +76,35 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  List<Widget> _buildActions(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  List<Widget> _buildActions(
+    BuildContext context,
+    ColorScheme colorScheme,
+    ThemeModeNotifier themeNotifier,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return [
+      IconButton(
+        onPressed: () {
+          themeNotifier.toggleTheme();
+        },
+        icon: Icon(
+          isDark ? Icons.light_mode : Icons.dark_mode,
+          color: isDark
+              ? const Color(0xFFFFC107)
+              : colorScheme.onSurfaceVariant,
+        ),
+      ),
       IconButton(
         onPressed: onLightBulbTap,
         icon: Icon(Icons.lightbulb_outline, color: const Color(0xFFFFC107)),
       ),
       IconButton(
-        onPressed: onNotificationTap,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotificationPage()),
+          );
+        },
         icon: Icon(
           Icons.notifications_outlined,
           color: colorScheme.onSurfaceVariant,

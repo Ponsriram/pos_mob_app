@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/features/onboarding/view/pages/login_page.dart';
+import 'package:pos_app/core/providers/theme_provider.dart';
 
 Future<void> main() async {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(themeModeNotifierProvider);
+
     return MaterialApp(
       title: 'POS APP',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 18, 144, 255),
-        ),
-        useMaterial3: true,
-      ),
+      theme: theme,
       debugShowCheckedModeBanner: false,
       home: const LoginPage(),
     );

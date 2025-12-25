@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../dashboard/view/pages/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,8 +19,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -49,39 +51,44 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLogo() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         Container(
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: const Color(0xFF1976D2),
+            color: colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.point_of_sale, color: Colors.white, size: 32),
+          child: Icon(
+            Icons.point_of_sale,
+            color: colorScheme.onPrimary,
+            size: 32,
+          ),
         ),
         const SizedBox(height: 8),
         RichText(
-          text: const TextSpan(
+          text: TextSpan(
             children: [
               TextSpan(
                 text: 'POS APP',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1976D2),
+                  color: colorScheme.primary,
                   letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
         ),
-        const Text(
+        Text(
           'POSS',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1976D2),
+            color: colorScheme.primary,
             letterSpacing: 2,
           ),
         ),
@@ -90,14 +97,15 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLoginCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: colorScheme.shadow.withOpacity(0.1),
             spreadRadius: 2,
             blurRadius: 10,
             offset: const Offset(0, 2),
@@ -107,18 +115,18 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Sign In',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'to access Account',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           // Email/Mobile Input
@@ -126,22 +134,25 @@ class _LoginPageState extends State<LoginPage> {
             controller: _emailController,
             decoration: InputDecoration(
               hintText: 'Email address or mobile number',
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+              hintStyle: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: colorScheme.outline),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF1976D2)),
+                borderSide: BorderSide(color: colorScheme.primary),
               ),
             ),
           ),
@@ -151,11 +162,16 @@ class _LoginPageState extends State<LoginPage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // Handle continue action
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DashboardPage(),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1976D2),
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -172,15 +188,18 @@ class _LoginPageState extends State<LoginPage> {
           // Or Divider
           Row(
             children: [
-              Expanded(child: Divider(color: Colors.grey[300])),
+              Expanded(child: Divider(color: colorScheme.outline)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'or',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                  ),
                 ),
               ),
-              Expanded(child: Divider(color: Colors.grey[300])),
+              Expanded(child: Divider(color: colorScheme.outline)),
             ],
           ),
           const SizedBox(height: 20),
@@ -196,24 +215,24 @@ class _LoginPageState extends State<LoginPage> {
                 width: 20,
                 height: 20,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
+                  return Icon(
                     Icons.g_mobiledata,
                     size: 24,
-                    color: Colors.red,
+                    color: colorScheme.error,
                   );
                 },
               ),
-              label: const Text(
+              label: Text(
                 'Sign in with Google',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: colorScheme.onSurface,
                 ),
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: BorderSide(color: Colors.grey[300]!),
+                side: BorderSide(color: colorScheme.outline),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -228,18 +247,21 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 Text(
                   'New in POS? ',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 GestureDetector(
                   onTap: () {
                     // Handle contact us
                   },
-                  child: const Text(
+                  child: Text(
                     'Contact Us',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -252,13 +274,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildFooter() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: [
           Text(
             '©2026 POS (Prayosha Food Services Pvt. Ltd.)',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
           Row(
@@ -270,7 +293,10 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 child: Text(
                   'Privacy',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -280,7 +306,10 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 child: Text(
                   'Terms & conditions',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],

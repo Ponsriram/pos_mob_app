@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/theme_provider.dart';
-import '../../model/drawer_menu_item_model.dart';
+import '../../../dashboard/model/drawer_menu_item_model.dart';
 import '../../viewmodel/online_orders_viewmodel.dart';
-import '../widgets/dashboard_drawer.dart';
-import '../widgets/chat_support_button.dart';
-import '../widgets/platform_tab_bar.dart';
-import '../widgets/orders_chart_section.dart';
+import '../../../dashboard/view/widgets/dashboard_drawer.dart';
+import '../../../dashboard/view/widgets/chat_support_button.dart';
+import '../../../dashboard/view/widgets/platform_tab_bar.dart';
+import '../../../dashboard/view/widgets/orders_chart_section.dart';
 import '../widgets/online_orders_filter_section.dart';
 import '../widgets/online_orders_data_table.dart';
-import 'notification_page.dart';
+import '../../../dashboard/view/pages/notification_page.dart';
+import 'pending_purchase_page.dart';
 import 'running_orders_page.dart';
+import 'thirdparty_user_list_page.dart';
 
 /// Online Orders Activity page
 class OnlineOrdersPage extends ConsumerStatefulWidget {
@@ -162,6 +164,22 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
       case 'online_orders':
         // Already on this page, do nothing
         break;
+      case 'thirdparty_config':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ThirdpartyUserListPage(),
+          ),
+        );
+        break;
+      case 'pending_purchases':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PendingPurchasePage(),
+          ),
+        );
+        break;
       default:
         break;
     }
@@ -243,6 +261,17 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
       ),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                Icons.arrow_back,
+                color: colorScheme.onSurfaceVariant,
+                size: 24,
+              ),
+            ),
+          ),
           // Title
           Text(
             'Online Orders Activity',
@@ -252,24 +281,6 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
             ),
           ),
           const Spacer(),
-          // Back button
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: 0.3),
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.arrow_back,
-                color: colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
-            ),
-          ),
         ],
       ),
     );

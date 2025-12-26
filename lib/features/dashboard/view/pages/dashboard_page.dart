@@ -7,8 +7,10 @@ import '../widgets/dashboard_drawer.dart';
 import '../widgets/outlet_statistics_section.dart';
 import '../widgets/stats_grid.dart';
 import '../widgets/total_sales_card.dart';
-import 'online_orders_page.dart';
-import 'running_orders_page.dart';
+import '../../../more/view/pages/online_orders_page.dart';
+import '../../../more/view/pages/pending_purchase_page.dart';
+import '../../../more/view/pages/running_orders_page.dart';
+import '../../../more/view/pages/thirdparty_user_list_page.dart';
 
 /// Main dashboard page displaying sales statistics and outlet information
 class DashboardPage extends StatefulWidget {
@@ -79,6 +81,22 @@ class _DashboardPageState extends State<DashboardPage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const OnlineOrdersPage()),
+        );
+        break;
+      case 'thirdparty_config':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ThirdpartyUserListPage(),
+          ),
+        );
+        break;
+      case 'pending_purchases':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PendingPurchasePage(),
+          ),
         );
         break;
       // Add more cases for other menu items as needed

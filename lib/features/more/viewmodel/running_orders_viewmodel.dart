@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../model/order_category_model.dart';
+import '../../dashboard/model/order_category_model.dart';
 
 /// ViewModel for the Running Orders screen
 class RunningOrdersViewModel extends ChangeNotifier {

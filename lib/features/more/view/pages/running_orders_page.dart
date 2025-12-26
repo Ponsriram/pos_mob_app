@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/bottom_nav_bar.dart';
-import '../../model/drawer_menu_item_model.dart';
+import '../../../dashboard/model/drawer_menu_item_model.dart';
 import '../../viewmodel/running_orders_viewmodel.dart';
-import '../widgets/dashboard_drawer.dart';
-import '../widgets/chat_support_button.dart';
-import '../widgets/order_category_card.dart';
-import '../widgets/order_summary_bottom_bar.dart';
+import '../../../dashboard/view/widgets/dashboard_drawer.dart';
+import '../../../dashboard/view/widgets/chat_support_button.dart';
+import '../../../dashboard/view/widgets/order_category_card.dart';
+import '../../../dashboard/view/widgets/order_summary_bottom_bar.dart';
 import '../widgets/running_orders_app_bar.dart';
 import '../widgets/running_orders_tab_bar.dart';
 import 'online_orders_page.dart';
+import 'pending_purchase_page.dart';
+import 'thirdparty_user_list_page.dart';
 
 /// Main page for displaying running orders
 class RunningOrdersPage extends StatefulWidget {
@@ -100,6 +102,22 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const OnlineOrdersPage()),
+        );
+        break;
+      case 'thirdparty_config':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ThirdpartyUserListPage(),
+          ),
+        );
+        break;
+      case 'pending_purchases':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PendingPurchasePage(),
+          ),
         );
         break;
       default:

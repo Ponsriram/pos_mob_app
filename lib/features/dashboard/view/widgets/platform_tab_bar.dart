@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../model/online_order_model.dart';
+import '../../../more/model/online_order_model.dart';
 
 /// Horizontal scrollable tab bar for platform selection
 class PlatformTabBar extends StatefulWidget {

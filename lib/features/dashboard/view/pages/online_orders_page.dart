@@ -140,25 +140,26 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
     final menuItems = DrawerMenuItemModel.getDefaultMenuItems();
     return DashboardDrawer(
       menuItems: menuItems,
-      onItemTap: (index) {
+      activeItemId: 'online_orders',
+      onItemTap: (itemId) {
         Navigator.pop(context);
-        _handleDrawerNavigation(menuItems[index]);
+        _handleDrawerNavigation(itemId);
       },
     );
   }
 
-  void _handleDrawerNavigation(DrawerMenuItemModel item) {
-    switch (item.title) {
-      case 'Dashboard':
+  void _handleDrawerNavigation(String itemId) {
+    switch (itemId) {
+      case 'dashboard':
         Navigator.pop(context); // Go back to dashboard
         break;
-      case 'Running Orders':
+      case 'running_orders':
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const RunningOrdersPage()),
         );
         break;
-      case 'Online Orders':
+      case 'online_orders':
         // Already on this page, do nothing
         break;
       default:

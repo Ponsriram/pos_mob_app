@@ -59,22 +59,23 @@ class _DashboardPageState extends State<DashboardPage> {
     final menuItems = DrawerMenuItemModel.getDefaultMenuItems();
     return DashboardDrawer(
       menuItems: menuItems,
-      onItemTap: (index) {
+      activeItemId: 'dashboard',
+      onItemTap: (itemId) {
         Navigator.pop(context);
-        _handleDrawerNavigation(menuItems[index]);
+        _handleDrawerNavigation(itemId);
       },
     );
   }
 
-  void _handleDrawerNavigation(DrawerMenuItemModel item) {
-    switch (item.title) {
-      case 'Running Orders':
+  void _handleDrawerNavigation(String itemId) {
+    switch (itemId) {
+      case 'running_orders':
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const RunningOrdersPage()),
         );
         break;
-      case 'Online Orders':
+      case 'online_orders':
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const OnlineOrdersPage()),

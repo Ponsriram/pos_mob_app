@@ -159,9 +159,7 @@ class _ThirdpartyUserListPageState
       case 'pending_purchases':
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const PendingPurchasePage(),
-          ),
+          MaterialPageRoute(builder: (context) => const PendingPurchasePage()),
         );
         break;
       default:

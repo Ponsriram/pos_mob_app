@@ -115,9 +115,7 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
       case 'pending_purchases':
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const PendingPurchasePage(),
-          ),
+          MaterialPageRoute(builder: (context) => const PendingPurchasePage()),
         );
         break;
       default:

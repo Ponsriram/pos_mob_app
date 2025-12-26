@@ -94,9 +94,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'pending_purchases':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const PendingPurchasePage(),
-          ),
+          MaterialPageRoute(builder: (context) => const PendingPurchasePage()),
         );
         break;
       // Add more cases for other menu items as needed

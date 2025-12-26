@@ -7,6 +7,7 @@ import '../widgets/dashboard_drawer.dart';
 import '../widgets/outlet_statistics_section.dart';
 import '../widgets/stats_grid.dart';
 import '../widgets/total_sales_card.dart';
+import 'online_orders_page.dart';
 import 'running_orders_page.dart';
 
 /// Main dashboard page displaying sales statistics and outlet information
@@ -71,6 +72,12 @@ class _DashboardPageState extends State<DashboardPage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const RunningOrdersPage()),
+        );
+        break;
+      case 'Online Orders':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const OnlineOrdersPage()),
         );
         break;
       // Add more cases for other menu items as needed

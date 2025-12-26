@@ -20,32 +20,32 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final topPadding = MediaQuery.of(context).padding.top;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
-                      // Logo
-                      _buildLogo(),
-                      const SizedBox(height: 40),
-                      // Login Card
-                      _buildLoginCard(),
-                    ],
-                  ),
+      body: Column(
+        children: [
+          SizedBox(height: topPadding),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    // Logo
+                    _buildLogo(),
+                    const SizedBox(height: 40),
+                    // Login Card
+                    _buildLoginCard(),
+                  ],
                 ),
               ),
             ),
-            // Footer
-            _buildFooter(),
-          ],
-        ),
+          ),
+          // Footer
+          _buildFooter(),
+        ],
       ),
     );
   }
@@ -105,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.1),
             spreadRadius: 2,
             blurRadius: 10,
             offset: const Offset(0, 2),

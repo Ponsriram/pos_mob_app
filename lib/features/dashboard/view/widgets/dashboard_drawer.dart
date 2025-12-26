@@ -11,23 +11,24 @@ class DashboardDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Drawer(
       backgroundColor: colorScheme.surface,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: menuItems.length,
-                itemBuilder: (context, index) {
-                  return _buildMenuItem(context, menuItems[index], index);
-                },
-              ),
+      child: Column(
+        children: [
+          SizedBox(height: topPadding),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: menuItems.length,
+              itemBuilder: (context, index) {
+                return _buildMenuItem(context, menuItems[index], index);
+              },
             ),
-            _buildFooter(context),
-          ],
-        ),
+          ),
+          _buildFooter(context, bottomPadding),
+        ],
       ),
     );
   }
@@ -97,7 +98,7 @@ class DashboardDrawer extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   color: isActive
-                      ? colorScheme.onPrimary.withOpacity(0.8)
+                      ? colorScheme.onPrimary.withValues(alpha: 0.8)
                       : colorScheme.onSurfaceVariant,
                 ),
               )
@@ -117,13 +118,18 @@ class DashboardDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, double bottomPadding) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: 16 + bottomPadding,
+      ),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+          top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
         ),
       ),
       child: Column(

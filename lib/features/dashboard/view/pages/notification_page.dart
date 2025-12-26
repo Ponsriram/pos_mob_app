@@ -43,7 +43,7 @@ class NotificationPage extends StatelessWidget {
                 Icon(
                   Icons.notifications_outlined,
                   size: 80,
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 Positioned(
                   top: 8,

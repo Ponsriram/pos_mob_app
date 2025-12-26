@@ -10,15 +10,25 @@ class StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          _buildRow(_buildOnlineSalesCard(), _buildCashCollectedCard()),
+          _buildRow(
+            _buildOnlineSalesCard(colorScheme),
+            _buildCashCollectedCard(colorScheme),
+          ),
           const SizedBox(height: 12),
-          _buildRow(_buildNetSalesCard(), _buildExpensesCard()),
+          _buildRow(
+            _buildNetSalesCard(colorScheme),
+            _buildExpensesCard(colorScheme),
+          ),
           const SizedBox(height: 12),
-          _buildRow(_buildTaxesCard(), _buildDiscountsCard()),
+          _buildRow(
+            _buildTaxesCard(colorScheme),
+            _buildDiscountsCard(colorScheme),
+          ),
         ],
       ),
     );
@@ -34,20 +44,20 @@ class StatsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildOnlineSalesCard() {
+  Widget _buildOnlineSalesCard(ColorScheme colorScheme) {
     return StatCard(
       icon: Icons.wifi_tethering,
-      iconBackgroundColor: const Color(0xFF4CAF50),
+      iconBackgroundColor: colorScheme.primary,
       title: 'Online Sales',
       amount: stats.onlineSales,
       infoText: '${stats.onlineSalesPercent} of sales',
     );
   }
 
-  Widget _buildCashCollectedCard() {
+  Widget _buildCashCollectedCard(ColorScheme colorScheme) {
     return StatCard(
       icon: Icons.account_balance_wallet_outlined,
-      iconBackgroundColor: const Color(0xFFFFC107),
+      iconBackgroundColor: colorScheme.tertiary,
       title: 'Cash Collected',
       amount: stats.cashCollected,
       infoText:
@@ -55,10 +65,10 @@ class StatsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildNetSalesCard() {
+  Widget _buildNetSalesCard(ColorScheme colorScheme) {
     return StatCard(
       icon: Icons.bar_chart,
-      iconBackgroundColor: const Color(0xFFFF9800),
+      iconBackgroundColor: colorScheme.secondary,
       title: 'Net Sales',
       amount: stats.netSales,
       infoText: 'Of ${stats.netSalesOutlets} outlets',
@@ -66,30 +76,30 @@ class StatsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildExpensesCard() {
+  Widget _buildExpensesCard(ColorScheme colorScheme) {
     return StatCard(
       icon: Icons.receipt_long_outlined,
-      iconBackgroundColor: const Color(0xFF2196F3),
+      iconBackgroundColor: colorScheme.primaryContainer,
       title: 'Expenses',
       amount: stats.expenses,
       infoText: 'Expenses recorded',
     );
   }
 
-  Widget _buildTaxesCard() {
+  Widget _buildTaxesCard(ColorScheme colorScheme) {
     return StatCard(
       icon: Icons.receipt_outlined,
-      iconBackgroundColor: const Color(0xFF607D8B),
+      iconBackgroundColor: colorScheme.outline,
       title: 'Taxes',
       amount: stats.taxes,
       infoText: 'Taxes recorded',
     );
   }
 
-  Widget _buildDiscountsCard() {
+  Widget _buildDiscountsCard(ColorScheme colorScheme) {
     return StatCard(
       icon: Icons.local_offer_outlined,
-      iconBackgroundColor: const Color(0xFFE91E63),
+      iconBackgroundColor: colorScheme.error,
       title: 'Discounts',
       amount: stats.discounts,
       infoText: '${stats.discountsPercent} Discounts given',

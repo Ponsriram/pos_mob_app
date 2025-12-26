@@ -7,6 +7,7 @@ import '../widgets/dashboard_drawer.dart';
 import '../widgets/outlet_statistics_section.dart';
 import '../widgets/stats_grid.dart';
 import '../widgets/total_sales_card.dart';
+import 'running_orders_page.dart';
 
 /// Main dashboard page displaying sales statistics and outlet information
 class DashboardPage extends StatefulWidget {
@@ -54,13 +55,29 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildDrawer() {
+    final menuItems = DrawerMenuItemModel.getDefaultMenuItems();
     return DashboardDrawer(
-      menuItems: DrawerMenuItemModel.getDefaultMenuItems(),
+      menuItems: menuItems,
       onItemTap: (index) {
         Navigator.pop(context);
-        // Handle menu item tap
+        _handleDrawerNavigation(menuItems[index]);
       },
     );
+  }
+
+  void _handleDrawerNavigation(DrawerMenuItemModel item) {
+    switch (item.title) {
+      case 'Running Orders':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RunningOrdersPage()),
+        );
+        break;
+      // Add more cases for other menu items as needed
+      default:
+        // Handle other menu items or do nothing
+        break;
+    }
   }
 
   Widget _buildBody() {
@@ -112,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -205,51 +222,49 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Select Outlet',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Select Outlet',
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
               ),
-              const Divider(height: 1),
-              ...List.generate(_viewModel.availableOutlets.length, (index) {
-                final outlet = _viewModel.availableOutlets[index];
-                final isSelected = outlet == _viewModel.selectedOutlet;
-                return ListTile(
-                  onTap: () {
-                    _viewModel.setSelectedOutlet(outlet);
-                    Navigator.pop(context);
-                  },
-                  leading: Icon(
-                    isSelected
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: isSelected
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
+            ),
+            const Divider(height: 1),
+            ...List.generate(_viewModel.availableOutlets.length, (index) {
+              final outlet = _viewModel.availableOutlets[index];
+              final isSelected = outlet == _viewModel.selectedOutlet;
+              return ListTile(
+                onTap: () {
+                  _viewModel.setSelectedOutlet(outlet);
+                  Navigator.pop(context);
+                },
+                leading: Icon(
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                title: Text(
+                  outlet,
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
-                  title: Text(
-                    outlet,
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
-          ),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
         );
       },
     );

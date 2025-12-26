@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/core/providers/theme_provider.dart';
 import 'package:pos_app/features/dashboard/view/pages/notification_page.dart';
 
-/// Custom app bar for the dashboard screen
-class DashboardAppBar extends ConsumerWidget implements PreferredSizeWidget {
+/// Custom app bar for the Running Orders screen
+class RunningOrdersAppBar extends ConsumerWidget
+    implements PreferredSizeWidget {
   final String selectedOutlet;
   final VoidCallback onMenuTap;
   final VoidCallback? onOutletTap;
   final VoidCallback? onLightBulbTap;
 
-  const DashboardAppBar({
+  const RunningOrdersAppBar({
     super.key,
     required this.selectedOutlet,
     required this.onMenuTap,
@@ -81,19 +82,7 @@ class DashboardAppBar extends ConsumerWidget implements PreferredSizeWidget {
     ColorScheme colorScheme,
     ThemeModeNotifier themeNotifier,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return [
-      IconButton(
-        onPressed: () {
-          themeNotifier.toggleTheme();
-        },
-        icon: Icon(
-          isDark ? Icons.light_mode : Icons.dark_mode,
-          color: isDark
-              ? const Color(0xFFFFC107)
-              : colorScheme.onSurfaceVariant,
-        ),
-      ),
       IconButton(
         onPressed: onLightBulbTap,
         icon: const Icon(Icons.lightbulb_outline, color: Color(0xFFFFC107)),

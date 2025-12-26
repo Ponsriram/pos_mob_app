@@ -28,14 +28,14 @@ class TotalSalesCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primaryContainer.withOpacity(0.3),
+            colorScheme.primaryContainer.withValues(alpha: 0.3),
             colorScheme.surface,
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -80,7 +80,7 @@ class TotalSalesCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colorScheme.surface.withOpacity(0.8),
+              color: colorScheme.surface.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.show_chart, color: colorScheme.primary, size: 20),
@@ -150,7 +150,7 @@ class _WavePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final colorScheme = Theme.of(context).colorScheme;
     final paint = Paint()
-      ..color = colorScheme.primary.withOpacity(0.2)
+      ..color = colorScheme.primary.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
 
     final path = Path();
@@ -175,7 +175,7 @@ class _WavePainter extends CustomPainter {
 
     // Second wave with lighter opacity
     final paint2 = Paint()
-      ..color = colorScheme.primary.withOpacity(0.1)
+      ..color = colorScheme.primary.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     final path2 = Path();

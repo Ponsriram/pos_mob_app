@@ -28,6 +28,13 @@ class OnlineOrdersViewModel extends ChangeNotifier {
   // Getters
   String get selectedOutlet => _selectedOutlet;
   String get selectedPlatformId => _selectedPlatformId;
+
+  /// List of available outlets
+  List<String> get availableOutlets => [
+    'All Outlets',
+    'Aarthi cake Magic',
+    'Ambattur Aarthi sweets and bakery',
+  ];
   RestaurantModel? get selectedRestaurant => _selectedRestaurant;
   RecordType get selectedRecordType => _selectedRecordType;
   OrderStatus get selectedStatus => _selectedStatus;

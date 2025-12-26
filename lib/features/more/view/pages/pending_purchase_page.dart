@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/bottom_nav_bar.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/pos_app_bar.dart';
+import '../../../../core/widgets/show_outlet_picker.dart';
 import '../../../dashboard/view/pages/notification_page.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../viewmodel/pending_purchase_viewmodel.dart';
@@ -132,38 +133,11 @@ class _PendingPurchasePageState extends ConsumerState<PendingPurchasePage> {
   }
 
   void _showOutletPicker() {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    showOutletPicker(
       context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _viewModel.outlets.map((outlet) {
-              return ListTile(
-                title: Text(outlet),
-                leading: Radio<String>(
-                  value: outlet,
-                  groupValue: _viewModel.selectedOutlet,
-                  onChanged: (value) {
-                    _viewModel.setSelectedOutlet(value!);
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () {
-                  _viewModel.setSelectedOutlet(outlet);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
+      availableOutlets: _viewModel.outlets,
+      selectedOutlet: _viewModel.selectedOutlet,
+      onOutletSelected: _viewModel.setSelectedOutlet,
     );
   }
 }

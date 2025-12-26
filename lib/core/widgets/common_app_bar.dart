@@ -3,20 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/core/providers/theme_provider.dart';
 import 'package:pos_app/features/dashboard/view/pages/notification_page.dart';
 
-/// Custom app bar for the Running Orders screen
-class RunningOrdersAppBar extends ConsumerWidget
-    implements PreferredSizeWidget {
+/// Custom app bar for the dashboard screen
+class CommonAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String selectedOutlet;
   final VoidCallback onMenuTap;
   final VoidCallback? onOutletTap;
   final VoidCallback? onLightBulbTap;
+  final String? subTitle;
 
-  const RunningOrdersAppBar({
+  const CommonAppBar({
     super.key,
     required this.selectedOutlet,
     required this.onMenuTap,
     this.onOutletTap,
     this.onLightBulbTap,
+    this.subTitle,
   });
 
   @override

@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/bottom_nav_bar.dart';
-import '../../../dashboard/model/drawer_menu_item_model.dart';
+import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/running_orders_viewmodel.dart';
-import '../../../dashboard/view/widgets/dashboard_drawer.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../../dashboard/view/widgets/order_category_card.dart';
 import '../../../dashboard/view/widgets/order_summary_bottom_bar.dart';
-import '../widgets/running_orders_app_bar.dart';
 import '../widgets/running_orders_tab_bar.dart';
-import 'online_orders_page.dart';
-import 'pending_purchase_page.dart';
-import 'thirdparty_user_list_page.dart';
 
 /// Main page for displaying running orders
 class RunningOrdersPage extends StatefulWidget {
@@ -21,7 +16,6 @@ class RunningOrdersPage extends StatefulWidget {
 }
 
 class _RunningOrdersPageState extends State<RunningOrdersPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final RunningOrdersViewModel _viewModel;
 
   @override
@@ -32,16 +26,15 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, child) {
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: colorScheme.surfaceContainerLowest,
-          appBar: _buildAppBar(),
-          drawer: _buildDrawer(),
+        return CommonScaffold(
+          activeItemId: 'running_orders',
+          selectedOutlet: _viewModel.selectedOutlet,
+          availableOutlets: _viewModel.availableOutlets,
+          onOutletSelected: _viewModel.setSelectedOutlet,
+          onLightBulbTap: () {},
           body: _buildBody(),
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,
@@ -67,60 +60,6 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
         );
       },
     );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return RunningOrdersAppBar(
-      selectedOutlet: _viewModel.selectedOutlet,
-      onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-      onOutletTap: _showOutletPicker,
-      onLightBulbTap: () {},
-    );
-  }
-
-  Widget _buildDrawer() {
-    final menuItems = DrawerMenuItemModel.getDefaultMenuItems();
-    return DashboardDrawer(
-      menuItems: menuItems,
-      activeItemId: 'running_orders',
-      onItemTap: (itemId) {
-        Navigator.pop(context);
-        _handleDrawerNavigation(itemId);
-      },
-    );
-  }
-
-  void _handleDrawerNavigation(String itemId) {
-    switch (itemId) {
-      case 'dashboard':
-        Navigator.pop(context); // Go back to dashboard
-        break;
-      case 'running_orders':
-        // Already on this page, do nothing
-        break;
-      case 'online_orders':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnlineOrdersPage()),
-        );
-        break;
-      case 'thirdparty_config':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ThirdpartyUserListPage(),
-          ),
-        );
-        break;
-      case 'pending_purchases':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PendingPurchasePage()),
-        );
-        break;
-      default:
-        break;
-    }
   }
 
   Widget _buildBody() {
@@ -259,71 +198,5 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
 
   Widget _buildBottomNav() {
     return const BottomNavBar(currentIndex: 0);
-  }
-
-  void _showOutletPicker() {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('All Outlets'),
-                leading: Radio<String>(
-                  value: 'All Outlets',
-                  groupValue: _viewModel.selectedOutlet,
-                  onChanged: (value) {
-                    _viewModel.setSelectedOutlet(value!);
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () {
-                  _viewModel.setSelectedOutlet('All Outlets');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('Outlet 1'),
-                leading: Radio<String>(
-                  value: 'Outlet 1',
-                  groupValue: _viewModel.selectedOutlet,
-                  onChanged: (value) {
-                    _viewModel.setSelectedOutlet(value!);
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () {
-                  _viewModel.setSelectedOutlet('Outlet 1');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('Outlet 2'),
-                leading: Radio<String>(
-                  value: 'Outlet 2',
-                  groupValue: _viewModel.selectedOutlet,
-                  onChanged: (value) {
-                    _viewModel.setSelectedOutlet(value!);
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () {
-                  _viewModel.setSelectedOutlet('Outlet 2');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 }

@@ -15,6 +15,13 @@ class RunningOrdersViewModel extends ChangeNotifier {
   int get selectedTabIndex => _selectedTabIndex;
   List<OrderCategoryModel> get orderCategories => _orderCategories;
 
+  /// List of available outlets
+  List<String> get availableOutlets => [
+    'All Outlets',
+    'Aarthi cake Magic',
+    'Ambattur Aarthi sweets and bakery',
+  ];
+
   /// Get total order count across all categories
   int get totalOrderCount {
     return _orderCategories.fold(

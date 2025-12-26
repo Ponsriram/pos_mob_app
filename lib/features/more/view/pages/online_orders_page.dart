@@ -1,29 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers/theme_provider.dart';
-import '../../../dashboard/model/drawer_menu_item_model.dart';
+import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/online_orders_viewmodel.dart';
-import '../../../dashboard/view/widgets/dashboard_drawer.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../../dashboard/view/widgets/platform_tab_bar.dart';
 import '../../../dashboard/view/widgets/orders_chart_section.dart';
 import '../widgets/online_orders_filter_section.dart';
 import '../widgets/online_orders_data_table.dart';
-import '../../../dashboard/view/pages/notification_page.dart';
-import 'pending_purchase_page.dart';
-import 'running_orders_page.dart';
-import 'thirdparty_user_list_page.dart';
 
 /// Online Orders Activity page
-class OnlineOrdersPage extends ConsumerStatefulWidget {
+class OnlineOrdersPage extends StatefulWidget {
   const OnlineOrdersPage({super.key});
 
   @override
-  ConsumerState<OnlineOrdersPage> createState() => _OnlineOrdersPageState();
+  State<OnlineOrdersPage> createState() => _OnlineOrdersPageState();
 }
 
-class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+class _OnlineOrdersPageState extends State<OnlineOrdersPage> {
   late final OnlineOrdersViewModel _viewModel;
 
   @override
@@ -39,11 +31,13 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, child) {
-        return Scaffold(
-          key: _scaffoldKey,
+        return CommonScaffold(
+          activeItemId: 'online_orders',
+          selectedOutlet: _viewModel.selectedOutlet,
+          availableOutlets: _viewModel.availableOutlets,
+          onOutletSelected: _viewModel.setSelectedOutlet,
+          onLightBulbTap: () {},
           backgroundColor: colorScheme.surface,
-          appBar: _buildAppBar(colorScheme),
-          drawer: _buildDrawer(),
           body: _buildBody(),
           floatingActionButton: ChatSupportButton(
             onTap: () {
@@ -53,134 +47,6 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
         );
       },
     );
-  }
-
-  PreferredSizeWidget _buildAppBar(ColorScheme colorScheme) {
-    final themeNotifier = ref.read(themeModeNotifierProvider.notifier);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return AppBar(
-      backgroundColor: colorScheme.surface,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      leading: IconButton(
-        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        icon: Icon(Icons.menu, color: colorScheme.primary),
-      ),
-      title: _buildOutletSelector(colorScheme),
-      titleSpacing: 0,
-      actions: [
-        IconButton(
-          onPressed: () {
-            themeNotifier.toggleTheme();
-          },
-          icon: Icon(
-            isDark ? Icons.light_mode : Icons.dark_mode,
-            color: isDark
-                ? const Color(0xFFFFC107)
-                : colorScheme.onSurfaceVariant,
-          ),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.lightbulb_outline, color: Color(0xFFFFC107)),
-        ),
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationPage()),
-            );
-          },
-          icon: Icon(
-            Icons.notifications_outlined,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOutletSelector(ColorScheme colorScheme) {
-    return GestureDetector(
-      onTap: _showOutletPicker,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                _viewModel.selectedOutlet,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down,
-              color: colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    final menuItems = DrawerMenuItemModel.getDefaultMenuItems();
-    return DashboardDrawer(
-      menuItems: menuItems,
-      activeItemId: 'online_orders',
-      onItemTap: (itemId) {
-        Navigator.pop(context);
-        _handleDrawerNavigation(itemId);
-      },
-    );
-  }
-
-  void _handleDrawerNavigation(String itemId) {
-    switch (itemId) {
-      case 'dashboard':
-        Navigator.pop(context); // Go back to dashboard
-        break;
-      case 'running_orders':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const RunningOrdersPage()),
-        );
-        break;
-      case 'online_orders':
-        // Already on this page, do nothing
-        break;
-      case 'thirdparty_config':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ThirdpartyUserListPage(),
-          ),
-        );
-        break;
-      case 'pending_purchases':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PendingPurchasePage()),
-        );
-        break;
-      default:
-        break;
-    }
   }
 
   Widget _buildBody() {
@@ -314,57 +180,6 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showOutletPicker() {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('All Outlets'),
-                leading: Radio<String>(
-                  value: 'All Outlets',
-                  groupValue: _viewModel.selectedOutlet,
-                  onChanged: (value) {
-                    _viewModel.setSelectedOutlet(value!);
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () {
-                  _viewModel.setSelectedOutlet('All Outlets');
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('Outlet 1'),
-                leading: Radio<String>(
-                  value: 'Outlet 1',
-                  groupValue: _viewModel.selectedOutlet,
-                  onChanged: (value) {
-                    _viewModel.setSelectedOutlet(value!);
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () {
-                  _viewModel.setSelectedOutlet('Outlet 1');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

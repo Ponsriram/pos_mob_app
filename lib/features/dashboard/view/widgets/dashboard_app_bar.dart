@@ -48,6 +48,7 @@ class DashboardAppBar extends ConsumerWidget implements PreferredSizeWidget {
     return GestureDetector(
       onTap: onOutletTap,
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 220),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
@@ -56,12 +57,16 @@ class DashboardAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              selectedOutlet,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
+            Flexible(
+              child: Text(
+                selectedOutlet,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
             const SizedBox(width: 4),

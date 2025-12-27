@@ -80,7 +80,7 @@ class DrawerMenuItemModel {
           ),
           DrawerMenuItemModel(
             id: 'item_out_of_stock',
-            title: 'Item Out of Stock Tracking',
+            title: 'Item Out-of-Stock Tracking',
             icon: Icons.inventory_outlined,
             type: MenuItemType.subMenuItem,
           ),

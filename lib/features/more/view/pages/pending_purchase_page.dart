@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/common_scaffold.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
-import '../../../../core/widgets/pos_app_bar.dart';
-import '../../../../core/widgets/show_outlet_picker.dart';
-import '../../../dashboard/view/pages/notification_page.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../viewmodel/pending_purchase_viewmodel.dart';
 import '../widgets/pending_purchase_filter_section.dart';
 
 /// Purchase Pending After Sales Or Transfer page
-class PendingPurchasePage extends ConsumerStatefulWidget {
+class PendingPurchasePage extends StatefulWidget {
   const PendingPurchasePage({super.key});
 
   @override
-  ConsumerState<PendingPurchasePage> createState() =>
-      _PendingPurchasePageState();
+  State<PendingPurchasePage> createState() => _PendingPurchasePageState();
 }
 
-class _PendingPurchasePageState extends ConsumerState<PendingPurchasePage> {
+class _PendingPurchasePageState extends State<PendingPurchasePage> {
   late final PendingPurchaseViewModel _viewModel;
 
   @override
@@ -33,24 +29,13 @@ class _PendingPurchasePageState extends ConsumerState<PendingPurchasePage> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, child) {
-        return Scaffold(
+        return CommonScaffold(
+          activeItemId: 'pending_purchases',
+          selectedOutlet: _viewModel.selectedOutlet,
+          availableOutlets: _viewModel.outlets,
+          onOutletSelected: _viewModel.setSelectedOutlet,
+          onLightBulbTap: () {},
           backgroundColor: colorScheme.surface,
-          appBar: PosAppBar(
-            selectedOutlet: _viewModel.selectedOutlet,
-            onMenuTap: () {
-              // Open drawer or handle menu tap
-            },
-            onOutletTap: _showOutletPicker,
-            onLightBulbTap: () {},
-            onNotificationTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationPage(),
-                ),
-              );
-            },
-          ),
           body: _buildBody(),
           floatingActionButton: ChatSupportButton(
             onTap: () {
@@ -69,19 +54,8 @@ class _PendingPurchasePageState extends ConsumerState<PendingPurchasePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Divider line
-        Container(height: 1, color: colorScheme.primary),
-        // Title
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'Purchase Pending After Sales Or Transfer',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-        ),
+        // Header with back button and title
+        _buildHeader(colorScheme, textTheme),
         // Filter section
         PendingPurchaseFilterSection(
           restaurants: _viewModel.restaurants,
@@ -107,6 +81,38 @@ class _PendingPurchasePageState extends ConsumerState<PendingPurchasePage> {
     );
   }
 
+  Widget _buildHeader(ColorScheme colorScheme, TextTheme textTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                Icons.arrow_back,
+                color: colorScheme.onSurfaceVariant,
+                size: 24,
+              ),
+            ),
+          ),
+          // Title
+          Expanded(
+            child: Text(
+              'Purchase Pending After Sales Or Transfer',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContent() {
     if (_viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -120,14 +126,5 @@ class _PendingPurchasePageState extends ConsumerState<PendingPurchasePage> {
 
     // TODO: Build the list of pending purchases when data is available
     return const SizedBox.shrink();
-  }
-
-  void _showOutletPicker() {
-    showOutletPicker(
-      context: context,
-      availableOutlets: _viewModel.outlets,
-      selectedOutlet: _viewModel.selectedOutlet,
-      onOutletSelected: _viewModel.setSelectedOutlet,
-    );
   }
 }

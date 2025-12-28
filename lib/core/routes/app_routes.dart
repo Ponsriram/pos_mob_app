@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../features/dashboard/view/pages/dashboard_page.dart';
 import '../../features/dashboard/view/pages/notification_page.dart';
+import '../../features/more/view/pages/admin_group_page.dart';
+import '../../features/more/view/pages/biller_group_page.dart';
+import '../../features/more/view/pages/cloud_access_page.dart';
 import '../../features/more/view/pages/item_out_of_stock_page.dart';
 import '../../features/more/view/pages/menu_and_store_page.dart';
 import '../../features/more/view/pages/online_orders_page.dart';
@@ -25,6 +28,9 @@ class AppRoutes {
   static const String outletType = 'outlet_type';
   static const String pendingPurchases = 'pending_purchases';
   static const String notification = 'notification';
+  static const String billerGroup = 'biller_group';
+  static const String adminGroup = 'admin_group';
+  static const String cloudAccess = 'cloud_access';
 
   /// Map of route names to their corresponding page widgets
   /// This makes navigation scalable - just add entries here for new pages
@@ -39,6 +45,9 @@ class AppRoutes {
     outletType: (_) => const OutletTypePage(),
     pendingPurchases: (_) => const PendingPurchasePage(),
     notification: (_) => const NotificationPage(),
+    billerGroup: (_) => const BillerGroupPage(),
+    adminGroup: (_) => const AdminGroupPage(),
+    cloudAccess: (_) => const CloudAccessPage(),
   };
 
   /// Check if a route exists

@@ -129,12 +129,29 @@ class DrawerMenuItemModel {
         icon: Icons.manage_accounts_outlined,
         type: MenuItemType.expandableSection,
         children: [
-          const DrawerMenuItemModel(
+          DrawerMenuItemModel(
             id: 'user_management',
             title: 'User Management',
             icon: Icons.people_alt_outlined,
-            type: MenuItemType.subMenuItem,
+            type: MenuItemType.expandableSection,
             hasArrow: true,
+            children: const [
+              DrawerMenuItemModel(
+                id: 'biller_group',
+                title: 'Biller Group Management',
+                type: MenuItemType.subMenuItem,
+              ),
+              DrawerMenuItemModel(
+                id: 'admin_group',
+                title: 'Admin Group Management',
+                type: MenuItemType.subMenuItem,
+              ),
+              DrawerMenuItemModel(
+                id: 'cloud_access',
+                title: 'Cloud Access',
+                type: MenuItemType.subMenuItem,
+              ),
+            ],
           ),
           DrawerMenuItemModel(
             id: 'user_logs',

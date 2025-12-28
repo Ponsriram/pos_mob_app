@@ -6,7 +6,10 @@ import '../../features/more/view/pages/biller_group_page.dart';
 import '../../features/more/view/pages/cloud_access_page.dart';
 import '../../features/more/view/pages/item_out_of_stock_page.dart';
 import '../../features/more/view/pages/menu_and_store_page.dart';
+import '../../features/more/view/pages/menu_trigger_logs_page.dart';
+import '../../features/more/view/pages/online_item_logs_page.dart';
 import '../../features/more/view/pages/online_orders_page.dart';
+import '../../features/more/view/pages/online_store_logs_page.dart';
 import '../../features/more/view/pages/outlet_type_page.dart';
 import '../../features/more/view/pages/pending_purchase_page.dart';
 import '../../features/more/view/pages/running_orders_page.dart';
@@ -31,6 +34,9 @@ class AppRoutes {
   static const String billerGroup = 'biller_group';
   static const String adminGroup = 'admin_group';
   static const String cloudAccess = 'cloud_access';
+  static const String menuTriggerLogs = 'menu_trigger_logs';
+  static const String onlineStoreLogs = 'online_store_logs';
+  static const String onlineItemLogs = 'online_item_logs';
 
   /// Map of route names to their corresponding page widgets
   /// This makes navigation scalable - just add entries here for new pages
@@ -48,6 +54,9 @@ class AppRoutes {
     billerGroup: (_) => const BillerGroupPage(),
     adminGroup: (_) => const AdminGroupPage(),
     cloudAccess: (_) => const CloudAccessPage(),
+    menuTriggerLogs: (_) => const MenuTriggerLogsPage(),
+    onlineStoreLogs: (_) => const OnlineStoreLogsPage(),
+    onlineItemLogs: (_) => const OnlineItemLogsPage(),
   };
 
   /// Check if a route exists

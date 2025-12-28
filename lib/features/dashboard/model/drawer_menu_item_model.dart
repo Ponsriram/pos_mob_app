@@ -162,7 +162,7 @@ class DrawerMenuItemModel {
             children: const [
               DrawerMenuItemModel(
                 id: 'notification',
-                title: 'Notification',
+                title: 'Notifications',
                 type: MenuItemType.subMenuItem,
               ),
               DrawerMenuItemModel(

@@ -476,9 +476,9 @@ class _StoreStatusTrackingPageState extends State<StoreStatusTrackingPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: colorScheme.surface,
-                border: Border.all(color: colorScheme.tertiary, width: 3),
+                border: Border.all(color: colorScheme.primary, width: 3),
               ),
-              child: Icon(Icons.check, size: 48, color: colorScheme.tertiary),
+              child: Icon(Icons.check, size: 48, color: colorScheme.primary),
             ),
             const SizedBox(height: 24),
             Text(

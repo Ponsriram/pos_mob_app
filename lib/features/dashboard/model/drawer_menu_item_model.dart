@@ -183,8 +183,8 @@ class DrawerMenuItemModel {
             ],
           ),
           const DrawerMenuItemModel(
-            id: 'franchisee_management',
-            title: 'Franchisee Management',
+            id: 'franchise_management',
+            title: 'Franchise Management',
             icon: Icons.business_outlined,
             type: MenuItemType.subMenuItem,
           ),

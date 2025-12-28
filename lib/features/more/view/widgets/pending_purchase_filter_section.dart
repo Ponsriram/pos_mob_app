@@ -213,15 +213,14 @@ class PendingPurchaseFilterSection extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: restaurants.map((restaurant) {
+              final isSelected = restaurant == selectedRestaurant;
               return ListTile(
                 title: Text(restaurant),
-                leading: Radio<String>(
-                  value: restaurant,
-                  groupValue: selectedRestaurant,
-                  onChanged: (value) {
-                    onRestaurantChanged(value!);
-                    Navigator.pop(context);
-                  },
+                leading: Icon(
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: isSelected ? colorScheme.primary : colorScheme.outline,
                 ),
                 onTap: () {
                   onRestaurantChanged(restaurant);

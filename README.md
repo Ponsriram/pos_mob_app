@@ -1,4 +1,4 @@
-# pos_app
+# POS App
 
 A Flutter POS (Point of Sale) application following MVVM architecture with Riverpod state management.
 

@@ -243,60 +243,43 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
   }
 
   Widget _buildOrderStatusDropdown(ColorScheme colorScheme) {
-    return PopupMenuButton<OrderStatus>(
-      initialValue: _viewModel.selectedOrderStatus,
-      onSelected: _viewModel.setOrderStatus,
-      offset: const Offset(0, 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<OrderStatus>(
+          value: _viewModel.selectedOrderStatus,
+          isExpanded: true,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Expanded(
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          items: OrderStatus.values.map((status) {
+            return DropdownMenuItem<OrderStatus>(
+              value: status,
               child: Text(
-                _viewModel.selectedOrderStatus.displayName,
+                status.displayName,
                 style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
               ),
-            ),
-            Icon(
-              Icons.keyboard_arrow_down,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ],
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              _viewModel.setOrderStatus(value);
+            }
+          },
         ),
       ),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          enabled: false,
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              border: InputBorder.none,
-              prefixIcon: Icon(Icons.search, size: 20),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(vertical: 8),
-            ),
-          ),
-        ),
-        ...OrderStatus.values.map(
-          (status) =>
-              PopupMenuItem(value: status, child: Text(status.displayName)),
-        ),
-      ],
     );
   }
 
   Widget _buildRestaurantDropdown(ColorScheme colorScheme) {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value != 'header') {
-          _viewModel.toggleRestaurant(value);
-        }
-      },
-      offset: const Offset(0, 8),
+    return GestureDetector(
+      onTap: () => _showRestaurantBottomSheet(colorScheme),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
@@ -309,6 +292,7 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
               child: Text(
                 _viewModel.selectedRestaurantsText,
                 style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Icon(
@@ -318,28 +302,63 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
           ],
         ),
       ),
-      itemBuilder: (context) => _viewModel.restaurants
-          .map(
-            (restaurant) => PopupMenuItem(
-              value: restaurant.id,
-              child: StatefulBuilder(
-                builder: (context, setState) => Row(
+    );
+  }
+
+  void _showRestaurantBottomSheet(ColorScheme colorScheme) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.8,
+          expand: false,
+          builder: (context, scrollController) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
                   children: [
-                    Checkbox(
-                      value: restaurant.isSelected,
-                      onChanged: (value) {
-                        _viewModel.toggleRestaurant(restaurant.id);
-                        setState(() {});
-                      },
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Select Restaurants',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(restaurant.name),
+                    const Divider(height: 1),
+                    // Items list with checkboxes
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: _viewModel.restaurants.length,
+                        itemBuilder: (context, index) {
+                          final restaurant = _viewModel.restaurants[index];
+                          return CheckboxListTile(
+                            title: Text(restaurant.name),
+                            value: restaurant.isSelected,
+                            onChanged: (value) {
+                              _viewModel.toggleRestaurant(restaurant.id);
+                              setState(() {});
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   ],
-                ),
-              ),
-            ),
-          )
-          .toList(),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 

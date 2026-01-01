@@ -114,12 +114,11 @@ class DrawerMenuItemModel {
           ),
         ],
       ),
-
-      // Reports Section Header
+      // Reports Menu Item
       const DrawerMenuItemModel(
-        id: 'reports_header',
+        id: 'reports',
         title: 'Reports',
-        type: MenuItemType.sectionHeader,
+        icon: Icons.assessment_outlined,
       ),
 
       // Management Section (Expandable)

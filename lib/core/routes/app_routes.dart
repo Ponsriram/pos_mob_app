@@ -12,6 +12,7 @@ import '../../features/more/view/pages/online_orders_page.dart';
 import '../../features/more/view/pages/online_store_logs_page.dart';
 import '../../features/more/view/pages/outlet_type_page.dart';
 import '../../features/more/view/pages/pending_purchase_page.dart';
+import '../../features/more/view/pages/reports_page.dart';
 import '../../features/more/view/pages/running_orders_page.dart';
 import '../../features/more/view/pages/store_status_tracking_page.dart';
 import '../../features/more/view/pages/thirdparty_config_page.dart';
@@ -38,6 +39,7 @@ class AppRoutes {
   static const String menuTriggerLogs = 'menu_trigger_logs';
   static const String onlineStoreLogs = 'online_store_logs';
   static const String onlineItemLogs = 'online_item_logs';
+  static const String reports = 'reports';
 
   /// Map of route names to their corresponding page widgets
   /// This makes navigation scalable - just add entries here for new pages
@@ -58,6 +60,7 @@ class AppRoutes {
     menuTriggerLogs: (_) => const MenuTriggerLogsPage(),
     onlineStoreLogs: (_) => const OnlineStoreLogsPage(),
     onlineItemLogs: (_) => const OnlineItemLogsPage(),
+    reports: (_) => const ReportsPage(),
   };
 
   /// Check if a route exists

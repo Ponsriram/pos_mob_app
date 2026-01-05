@@ -5,6 +5,7 @@ import '../../features/dashboard/view/pages/notification_page.dart';
 import '../../features/more/view/pages/admin_group_page.dart';
 import '../../features/more/view/pages/biller_group_page.dart';
 import '../../features/more/view/pages/cloud_access_page.dart';
+import '../../features/more/view/pages/create_zone_page.dart';
 import '../../features/more/view/pages/delete_outlet_page.dart';
 import '../../features/more/view/pages/item_out_of_stock_page.dart';
 import '../../features/more/view/pages/menu_and_store_page.dart';
@@ -44,6 +45,7 @@ class AppRoutes {
   static const String reports = 'reports';
   static const String franchiseManagement = 'franchise_management';
   static const String deleteOutlet = 'delete_outlet';
+  static const String createZone = 'create_zone';
 
   /// Map of route names to their corresponding page widgets
   /// This makes navigation scalable - just add entries here for new pages
@@ -67,6 +69,7 @@ class AppRoutes {
     reports: (_) => const ReportsPage(),
     franchiseManagement: (_) => const FranchiseManagementPage(),
     deleteOutlet: (_) => const DeleteOutletPage(),
+    createZone: (_) => const CreateZonePage(),
   };
 
   /// Check if a route exists

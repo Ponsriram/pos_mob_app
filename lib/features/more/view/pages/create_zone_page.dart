@@ -65,7 +65,7 @@ class _CreateZonePageState extends State<CreateZonePage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: colorScheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         content: Text(
           'You have not selected any record. So please select at least one record to perform this action.',
           style: TextStyle(color: colorScheme.onSurface),

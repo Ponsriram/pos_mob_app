@@ -1,38 +1,74 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 import '../model/report_model.dart';
 
-/// ViewModel for the Reports screen
-class ReportsViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
-  String _searchQuery = '';
-  List<ReportModel> _reports = [];
-  List<ReportModel> _filteredReports = [];
+part 'reports_viewmodel.g.dart';
 
-  ReportsViewModel() {
-    _reports = ReportModel.getDefaultReports();
-    _filteredReports = _reports;
+/// State for the Reports screen
+class ReportsState {
+  final String? selectedStoreId;
+  final String searchQuery;
+  final List<ReportModel> reports;
+  final List<ReportModel> filteredReports;
+  final List<StoreModel> stores;
+  final bool isLoading;
+  final String? error;
+
+  const ReportsState({
+    this.selectedStoreId,
+    this.searchQuery = '',
+    this.reports = const [],
+    this.filteredReports = const [],
+    this.stores = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  ReportsState copyWith({
+    String? selectedStoreId,
+    String? searchQuery,
+    List<ReportModel>? reports,
+    List<ReportModel>? filteredReports,
+    List<StoreModel>? stores,
+    bool? isLoading,
+    String? error,
+  }) {
+    return ReportsState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      searchQuery: searchQuery ?? this.searchQuery,
+      reports: reports ?? this.reports,
+      filteredReports: filteredReports ?? this.filteredReports,
+      stores: stores ?? this.stores,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
   }
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
-  String get searchQuery => _searchQuery;
-  List<ReportModel> get filteredReports => _filteredReports;
-
-  /// List of available outlets
+  /// List of available outlets including "All Outlets"
   List<String> get availableOutlets => [
     'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
+    ...stores.map((s) => s.name),
   ];
+
+  /// Get selected outlet name
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+
+  /// Alias for selectedOutletName
+  String get selectedOutlet => selectedOutletName;
 
   /// Get favorite reports
   List<ReportModel> get favoriteReports =>
-      _reports.where((report) => report.isFavorite).toList();
+      reports.where((report) => report.isFavorite).toList();
 
   /// Get reports grouped by category
   Map<String, List<ReportModel>> get groupedReports {
     final Map<String, List<ReportModel>> grouped = {};
-    for (final report in _filteredReports) {
+    for (final report in filteredReports) {
       if (!grouped.containsKey(report.category)) {
         grouped[report.category] = [];
       }
@@ -40,44 +76,77 @@ class ReportsViewModel extends ChangeNotifier {
     }
     return grouped;
   }
+}
 
-  // Setters
-  void setSelectedOutlet(String outlet) {
-    if (_selectedOutlet != outlet) {
-      _selectedOutlet = outlet;
-      notifyListeners();
+/// ViewModel for the Reports screen using Riverpod
+@riverpod
+class ReportsViewModel extends _$ReportsViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  ReportsState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+
+    final defaultReports = ReportModel.getDefaultReports();
+    _loadStores();
+
+    return ReportsState(
+      reports: defaultReports,
+      filteredReports: defaultReports,
+    );
+  }
+
+  Future<void> _loadStores() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
     }
   }
 
   void setSearchQuery(String query) {
-    _searchQuery = query;
+    state = state.copyWith(searchQuery: query);
     _filterReports();
-    notifyListeners();
   }
 
   void toggleFavorite(String reportId) {
-    final index = _reports.indexWhere((report) => report.id == reportId);
-    if (index != -1) {
-      _reports[index] = _reports[index].copyWith(
-        isFavorite: !_reports[index].isFavorite,
-      );
-      _filterReports();
-      notifyListeners();
-    }
+    final updatedReports = state.reports.map((report) {
+      if (report.id == reportId) {
+        return report.copyWith(isFavorite: !report.isFavorite);
+      }
+      return report;
+    }).toList();
+
+    state = state.copyWith(reports: updatedReports);
+    _filterReports();
   }
 
   void _filterReports() {
-    if (_searchQuery.isEmpty) {
-      _filteredReports = _reports;
+    if (state.searchQuery.isEmpty) {
+      state = state.copyWith(filteredReports: state.reports);
     } else {
-      _filteredReports = _reports.where((report) {
+      final filtered = state.reports.where((report) {
         return report.title.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
+              state.searchQuery.toLowerCase(),
             ) ||
             report.description.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
+              state.searchQuery.toLowerCase(),
             );
       }).toList();
+      state = state.copyWith(filteredReports: filtered);
     }
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

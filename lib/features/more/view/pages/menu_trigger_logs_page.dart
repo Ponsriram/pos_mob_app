@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/menu_trigger_logs_viewmodel.dart';
 
 /// Online Menu Trigger Logs page
-class MenuTriggerLogsPage extends StatefulWidget {
+class MenuTriggerLogsPage extends ConsumerStatefulWidget {
   const MenuTriggerLogsPage({super.key});
 
   @override
-  State<MenuTriggerLogsPage> createState() => _MenuTriggerLogsPageState();
+  ConsumerState<MenuTriggerLogsPage> createState() =>
+      _MenuTriggerLogsPageState();
 }
 
-class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
-  late final MenuTriggerLogsViewModel _viewModel;
+class _MenuTriggerLogsPageState extends ConsumerState<MenuTriggerLogsPage> {
   late final TextEditingController _clientRestaurantIdController;
   late final TextEditingController _requestIdController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = MenuTriggerLogsViewModel();
     _clientRestaurantIdController = TextEditingController();
     _requestIdController = TextEditingController();
   }
@@ -34,20 +34,19 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewModel = ref.watch(menuTriggerLogsViewModelProvider);
+    final viewModelNotifier = ref.read(
+      menuTriggerLogsViewModelProvider.notifier,
+    );
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'menu_trigger_logs',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'menu_trigger_logs',
+      selectedOutlet: viewModel.selectedOutlet,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -125,11 +124,16 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(menuTriggerLogsViewModelProvider);
+    final viewModelNotifier = ref.read(
+      menuTriggerLogsViewModelProvider.notifier,
+    );
+
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: _viewModel.toggleSearchExpanded,
+          onTap: viewModelNotifier.toggleSearchExpanded,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -159,7 +163,7 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  _viewModel.isSearchExpanded
+                  viewModel.isSearchExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                   color: colorScheme.onSurfaceVariant,
@@ -169,13 +173,18 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (_viewModel.isSearchExpanded)
+        if (viewModel.isSearchExpanded)
           _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(menuTriggerLogsViewModelProvider);
+    final viewModelNotifier = ref.read(
+      menuTriggerLogsViewModelProvider.notifier,
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -193,9 +202,9 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           _buildDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedRestaurant,
-            items: _viewModel.restaurants,
-            onChanged: _viewModel.setSelectedRestaurant,
+            value: viewModel.selectedRestaurant,
+            items: viewModel.restaurants,
+            onChanged: viewModelNotifier.setSelectedRestaurant,
           ),
           const SizedBox(height: 16),
           // From Date
@@ -210,8 +219,8 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: _viewModel.fromDate,
-            onDateSelected: _viewModel.setFromDate,
+            date: viewModel.fromDate,
+            onDateSelected: viewModelNotifier.setFromDate,
           ),
           const SizedBox(height: 16),
           // To Date
@@ -226,8 +235,8 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: _viewModel.toDate,
-            onDateSelected: _viewModel.setToDate,
+            date: viewModel.toDate,
+            onDateSelected: viewModelNotifier.setToDate,
           ),
           const SizedBox(height: 16),
           // Select Thirdparty User
@@ -242,9 +251,9 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedThirdpartyUser,
-            items: _viewModel.thirdpartyUsers,
-            onChanged: _viewModel.setSelectedThirdpartyUser,
+            value: viewModel.selectedThirdpartyUser,
+            items: viewModel.thirdpartyUsers,
+            onChanged: viewModelNotifier.setSelectedThirdpartyUser,
           ),
           const SizedBox(height: 16),
           // Client Restaurant ID
@@ -258,7 +267,7 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _clientRestaurantIdController,
-            onChanged: _viewModel.setClientRestaurantId,
+            onChanged: viewModelNotifier.setClientRestaurantId,
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -295,7 +304,7 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _requestIdController,
-            onChanged: _viewModel.setRequestId,
+            onChanged: viewModelNotifier.setRequestId,
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -333,9 +342,9 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedStatus,
-            items: _viewModel.statuses,
-            onChanged: _viewModel.setSelectedStatus,
+            value: viewModel.selectedStatus,
+            items: viewModel.statuses,
+            onChanged: viewModelNotifier.setSelectedStatus,
           ),
           const SizedBox(height: 24),
           // Search and Reset buttons
@@ -343,7 +352,7 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  _viewModel.search();
+                  viewModelNotifier.search();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -369,7 +378,7 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
                 onPressed: () {
                   _clientRestaurantIdController.clear();
                   _requestIdController.clear();
-                  _viewModel.reset();
+                  viewModelNotifier.reset();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -548,7 +557,9 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    if (_viewModel.isLoading) {
+    final viewModel = ref.watch(menuTriggerLogsViewModelProvider);
+
+    if (viewModel.isLoading) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -557,7 +568,7 @@ class _MenuTriggerLogsPageState extends State<MenuTriggerLogsPage> {
       );
     }
 
-    if (_viewModel.logs.isEmpty) {
+    if (viewModel.logs.isEmpty) {
       return _buildEmptyState(colorScheme, textTheme);
     }
 

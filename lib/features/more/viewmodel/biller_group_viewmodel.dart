@@ -1,88 +1,128 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 
-/// ViewModel for Biller Group Management page
-class BillerGroupViewModel extends ChangeNotifier {
-  // Outlet selection
-  String _selectedOutlet = 'All Outlets';
-  final List<String> _availableOutlets = [
+part 'biller_group_viewmodel.g.dart';
+
+/// State for Biller Group Management page
+class BillerGroupState {
+  final String? selectedStoreId;
+  final List<StoreModel> stores;
+  final bool isSearchExpanded;
+  final String billerGroupName;
+  final String selectedUserType;
+  final List<String> userTypes;
+  final List<Map<String, dynamic>> billerGroups;
+  final bool isLoading;
+  final String? error;
+
+  const BillerGroupState({
+    this.selectedStoreId,
+    this.stores = const [],
+    this.isSearchExpanded = true,
+    this.billerGroupName = '',
+    this.selectedUserType = 'All',
+    this.userTypes = const ['All', 'Billing User', 'Captain'],
+    this.billerGroups = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  BillerGroupState copyWith({
+    String? selectedStoreId,
+    List<StoreModel>? stores,
+    bool? isSearchExpanded,
+    String? billerGroupName,
+    String? selectedUserType,
+    List<String>? userTypes,
+    List<Map<String, dynamic>>? billerGroups,
+    bool? isLoading,
+    String? error,
+  }) {
+    return BillerGroupState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      stores: stores ?? this.stores,
+      isSearchExpanded: isSearchExpanded ?? this.isSearchExpanded,
+      billerGroupName: billerGroupName ?? this.billerGroupName,
+      selectedUserType: selectedUserType ?? this.selectedUserType,
+      userTypes: userTypes ?? this.userTypes,
+      billerGroups: billerGroups ?? this.billerGroups,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+
+  List<String> get availableOutlets => [
     'All Outlets',
-    'Outlet 1',
-    'Outlet 2',
+    ...stores.map((s) => s.name),
   ];
 
-  String get selectedOutlet => _selectedOutlet;
-  List<String> get availableOutlets => _availableOutlets;
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+}
 
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+/// ViewModel for Biller Group Management page using Riverpod
+@riverpod
+class BillerGroupViewModel extends _$BillerGroupViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  BillerGroupState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    _loadInitialData();
+    return const BillerGroupState();
   }
 
-  // Search section expansion
-  bool _isSearchExpanded = true;
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
 
-  bool get isSearchExpanded => _isSearchExpanded;
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
+    }
+  }
 
   void toggleSearchExpanded() {
-    _isSearchExpanded = !_isSearchExpanded;
-    notifyListeners();
+    state = state.copyWith(isSearchExpanded: !state.isSearchExpanded);
   }
-
-  // Biller Group Name filter
-  String _billerGroupName = '';
-
-  String get billerGroupName => _billerGroupName;
 
   void setBillerGroupName(String name) {
-    _billerGroupName = name;
-    notifyListeners();
+    state = state.copyWith(billerGroupName: name);
   }
-
-  // User Type filter
-  String _selectedUserType = 'All';
-  final List<String> _userTypes = ['All', 'Billing User', 'Captain'];
-
-  String get selectedUserType => _selectedUserType;
-  List<String> get userTypes => _userTypes;
 
   void setSelectedUserType(String type) {
-    _selectedUserType = type;
-    notifyListeners();
+    state = state.copyWith(selectedUserType: type);
   }
 
-  // Biller groups list (empty for now - will be populated from API)
-  List<Map<String, dynamic>> _billerGroups = [];
-
-  List<Map<String, dynamic>> get billerGroups => _billerGroups;
-
-  // Loading state
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
-  // Search functionality
-  void search() {
-    _isLoading = true;
-    notifyListeners();
+  Future<void> search() async {
+    state = state.copyWith(isLoading: true, error: null);
 
     // TODO: Implement API call to search biller groups
-    // For now, just simulate a search
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _billerGroups = []; // Results would come from API
-      _isLoading = false;
-      notifyListeners();
-    });
+    await Future.delayed(const Duration(milliseconds: 500));
+    state = state.copyWith(billerGroups: [], isLoading: false);
   }
 
   void showAll() {
-    _billerGroupName = '';
-    _selectedUserType = 'All';
+    state = state.copyWith(billerGroupName: '', selectedUserType: 'All');
     search();
   }
 
   void clearFilters() {
-    _billerGroupName = '';
-    _selectedUserType = 'All';
-    notifyListeners();
+    state = state.copyWith(billerGroupName: '', selectedUserType: 'All');
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

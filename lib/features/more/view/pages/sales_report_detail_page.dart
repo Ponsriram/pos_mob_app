@@ -1,95 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/sales_report_viewmodel.dart';
 import '../../model/sales_report_model.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 
-class SalesReportDetailPage extends StatefulWidget {
+class SalesReportDetailPage extends ConsumerStatefulWidget {
   final String reportTitle;
 
   const SalesReportDetailPage({super.key, required this.reportTitle});
 
   @override
-  State<SalesReportDetailPage> createState() => _SalesReportDetailPageState();
+  ConsumerState<SalesReportDetailPage> createState() =>
+      _SalesReportDetailPageState();
 }
 
-class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
-  late final SalesReportViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = SalesReportViewModel();
-  }
-
+class _SalesReportDetailPageState extends ConsumerState<SalesReportDetailPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final state = ref.watch(salesReportViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'reports',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and back button
-              _buildHeader(colorScheme, textTheme),
-              // Main content
-              Expanded(
-                child: Container(
-                  color: colorScheme.surfaceContainerLowest,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Time Wise button
-                        const SizedBox(height: 16),
-                        // Filters section
-                        _buildFiltersSection(colorScheme, textTheme),
-                        const SizedBox(height: 24),
-                        // Action buttons
-                        _buildActionButtons(colorScheme),
-                        const SizedBox(height: 16),
-                        // Data table
-                        _buildDataTable(colorScheme, textTheme),
-                        const SizedBox(height: 16),
-                        // Showing entries text
-                        Align(
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 16),
-                            child: Text(
-                              'Showing 1 to 2 of 2 entries',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
+    return CommonScaffold(
+      activeItemId: 'reports',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(salesReportViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and back button
+          _buildHeader(colorScheme, textTheme),
+          // Main content
+          Expanded(
+            child: Container(
+              color: colorScheme.surfaceContainerLowest,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Time Wise button
+                    const SizedBox(height: 16),
+                    // Filters section
+                    _buildFiltersSection(colorScheme, textTheme),
+                    const SizedBox(height: 24),
+                    // Action buttons
+                    _buildActionButtons(colorScheme),
+                    const SizedBox(height: 16),
+                    // Data table
+                    _buildDataTable(colorScheme, textTheme),
+                    const SizedBox(height: 16),
+                    // Showing entries text
+                    Align(
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Text(
+                          'Showing 1 to 2 of 2 entries',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+        ],
+      ),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 
@@ -126,6 +118,9 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
   }
 
   Widget _buildFiltersSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final state = ref.watch(salesReportViewModelProvider);
+    final notifier = ref.read(salesReportViewModelProvider.notifier);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -141,15 +136,15 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
         // Start date field
         _buildDateField(
           colorScheme,
-          _viewModel.startDate,
-          (date) => _viewModel.setStartDate(date),
+          state.startDate,
+          (date) => notifier.setStartDate(date),
         ),
         const SizedBox(height: 12),
         // End date field
         _buildDateField(
           colorScheme,
-          _viewModel.endDate,
-          (date) => _viewModel.setEndDate(date),
+          state.endDate,
+          (date) => notifier.setEndDate(date),
         ),
         const SizedBox(height: 16),
         // Order Status
@@ -178,7 +173,7 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
         SizedBox(
           width: 120,
           child: ElevatedButton(
-            onPressed: _viewModel.search,
+            onPressed: ref.read(salesReportViewModelProvider.notifier).search,
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
@@ -260,6 +255,8 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
   }
 
   Widget _buildOrderStatusDropdown(ColorScheme colorScheme) {
+    final state = ref.watch(salesReportViewModelProvider);
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
@@ -267,7 +264,7 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<OrderStatus>(
-          value: _viewModel.selectedOrderStatus,
+          value: state.selectedOrderStatus,
           isExpanded: true,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           borderRadius: BorderRadius.circular(8),
@@ -286,7 +283,9 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
           }).toList(),
           onChanged: (value) {
             if (value != null) {
-              _viewModel.setOrderStatus(value);
+              ref
+                  .read(salesReportViewModelProvider.notifier)
+                  .setOrderStatus(value);
             }
           },
         ),
@@ -295,6 +294,8 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
   }
 
   Widget _buildRestaurantDropdown(ColorScheme colorScheme) {
+    final state = ref.watch(salesReportViewModelProvider);
+
     return GestureDetector(
       onTap: () => _showRestaurantBottomSheet(colorScheme),
       child: Container(
@@ -307,7 +308,7 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
           children: [
             Expanded(
               child: Text(
-                _viewModel.selectedRestaurantsText,
+                state.selectedRestaurantsText,
                 style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -355,14 +356,21 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
                     Expanded(
                       child: ListView.builder(
                         controller: scrollController,
-                        itemCount: _viewModel.restaurants.length,
+                        itemCount: ref
+                            .read(salesReportViewModelProvider)
+                            .restaurants
+                            .length,
                         itemBuilder: (context, index) {
-                          final restaurant = _viewModel.restaurants[index];
+                          final restaurant = ref
+                              .read(salesReportViewModelProvider)
+                              .restaurants[index];
                           return CheckboxListTile(
                             title: Text(restaurant.name),
                             value: restaurant.isSelected,
                             onChanged: (value) {
-                              _viewModel.toggleRestaurant(restaurant.id);
+                              ref
+                                  .read(salesReportViewModelProvider.notifier)
+                                  .toggleRestaurant(restaurant.id);
                               setState(() {});
                             },
                           );
@@ -413,9 +421,14 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
                     builder: (context, setState) {
                       return ListView.builder(
                         shrinkWrap: true,
-                        itemCount: _viewModel.columns.length,
+                        itemCount: ref
+                            .read(salesReportViewModelProvider)
+                            .columns
+                            .length,
                         itemBuilder: (context, index) {
-                          final column = _viewModel.columns[index];
+                          final column = ref
+                              .read(salesReportViewModelProvider)
+                              .columns[index];
                           return CheckboxListTile(
                             dense: true,
                             contentPadding: const EdgeInsets.only(
@@ -428,7 +441,9 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
                             ),
                             value: column.isVisible,
                             onChanged: (value) {
-                              _viewModel.toggleColumn(column.id);
+                              ref
+                                  .read(salesReportViewModelProvider.notifier)
+                                  .toggleColumn(column.id);
                               setState(() {});
                             },
                           );
@@ -444,7 +459,9 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
         const Spacer(),
         // Excel button
         OutlinedButton(
-          onPressed: _viewModel.exportToExcel,
+          onPressed: ref
+              .read(salesReportViewModelProvider.notifier)
+              .exportToExcel,
           style: OutlinedButton.styleFrom(
             backgroundColor: colorScheme.primary,
             foregroundColor: colorScheme.onPrimary,
@@ -455,7 +472,9 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
         const SizedBox(width: 12),
         // Print button
         OutlinedButton(
-          onPressed: _viewModel.printReport,
+          onPressed: ref
+              .read(salesReportViewModelProvider.notifier)
+              .printReport,
           style: OutlinedButton.styleFrom(
             backgroundColor: colorScheme.secondary,
             foregroundColor: colorScheme.onPrimary,
@@ -468,6 +487,8 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
   }
 
   Widget _buildDataTable(ColorScheme colorScheme, TextTheme textTheme) {
+    final state = ref.watch(salesReportViewModelProvider);
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
@@ -495,34 +516,14 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
               ),
             ),
             // Summary rows
-            if (_viewModel.summary != null) ...[
-              _buildSummaryRow(
-                'Total',
-                _viewModel.summary!,
-                colorScheme,
-                textTheme,
-              ),
-              _buildSummaryRow(
-                'Min.',
-                _viewModel.summary!,
-                colorScheme,
-                textTheme,
-              ),
-              _buildSummaryRow(
-                'Max.',
-                _viewModel.summary!,
-                colorScheme,
-                textTheme,
-              ),
-              _buildSummaryRow(
-                'Avg.',
-                _viewModel.summary!,
-                colorScheme,
-                textTheme,
-              ),
+            if (state.summary != null) ...[
+              _buildSummaryRow('Total', state.summary!, colorScheme, textTheme),
+              _buildSummaryRow('Min.', state.summary!, colorScheme, textTheme),
+              _buildSummaryRow('Max.', state.summary!, colorScheme, textTheme),
+              _buildSummaryRow('Avg.', state.summary!, colorScheme, textTheme),
             ],
             // Data rows
-            ..._viewModel.salesData.map(
+            ...state.salesData.map(
               (data) => _buildDataRow(data, colorScheme, textTheme),
             ),
           ],
@@ -572,7 +573,10 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
     ];
 
     for (final (id, name, width) in columnData) {
-      final column = _viewModel.columns.firstWhere((c) => c.id == id);
+      final column = ref
+          .read(salesReportViewModelProvider)
+          .columns
+          .firstWhere((c) => c.id == id);
       if (column.isVisible) {
         headers.add(_buildHeaderCell(name, width));
       }
@@ -662,7 +666,10 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
     ];
 
     for (final (id, value, width, _) in cellData) {
-      final column = _viewModel.columns.firstWhere((c) => c.id == id);
+      final column = ref
+          .read(salesReportViewModelProvider)
+          .columns
+          .firstWhere((c) => c.id == id);
       if (column.isVisible) {
         cells.add(
           _buildCell(value, width, isBold: false, textColor: Colors.black),
@@ -704,7 +711,10 @@ class _SalesReportDetailPageState extends State<SalesReportDetailPage> {
     ];
 
     for (final (id, value, width) in cellData) {
-      final column = _viewModel.columns.firstWhere((c) => c.id == id);
+      final column = ref
+          .read(salesReportViewModelProvider)
+          .columns
+          .firstWhere((c) => c.id == id);
       if (column.isVisible) {
         cells.add(_buildCell(value, width));
       }

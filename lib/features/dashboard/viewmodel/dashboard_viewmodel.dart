@@ -1,23 +1,62 @@
-import 'package:flutter/material.dart';
-import '../model/dashboard_stats_model.dart';
-import '../model/outlet_stats_model.dart';
+import 'dart:async';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/dashboard_repository.dart';
 
-/// ViewModel for the Dashboard screen
-/// Manages state and business logic for the dashboard
-class DashboardViewModel extends ChangeNotifier {
-  // Private state
-  DateTime _selectedDate = DateTime.now();
-  String _selectedOutlet = 'All Outlets';
-  int _activeStatsTab = 0;
-  int _currentNavIndex = 0;
-  bool _isDrawerOpen = false;
+part 'dashboard_viewmodel.g.dart';
 
-  // Getters
-  DateTime get selectedDate => _selectedDate;
-  String get selectedOutlet => _selectedOutlet;
-  int get activeStatsTab => _activeStatsTab;
-  int get currentNavIndex => _currentNavIndex;
-  bool get isDrawerOpen => _isDrawerOpen;
+/// Dashboard UI state
+class DashboardState {
+  final DateTime selectedDate;
+  final String? selectedStoreId;
+  final int activeStatsTab;
+  final int currentNavIndex;
+  final bool isDrawerOpen;
+  final DashboardStats stats;
+  final List<OutletStats> outletStats;
+  final List<StoreModel> stores;
+  final bool isLoading;
+  final String? error;
+
+  const DashboardState({
+    required this.selectedDate,
+    this.selectedStoreId,
+    this.activeStatsTab = 0,
+    this.currentNavIndex = 0,
+    this.isDrawerOpen = false,
+    this.stats = DashboardStats.empty,
+    this.outletStats = const [],
+    this.stores = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  DashboardState copyWith({
+    DateTime? selectedDate,
+    String? selectedStoreId,
+    int? activeStatsTab,
+    int? currentNavIndex,
+    bool? isDrawerOpen,
+    DashboardStats? stats,
+    List<OutletStats>? outletStats,
+    List<StoreModel>? stores,
+    bool? isLoading,
+    String? error,
+  }) {
+    return DashboardState(
+      selectedDate: selectedDate ?? this.selectedDate,
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      activeStatsTab: activeStatsTab ?? this.activeStatsTab,
+      currentNavIndex: currentNavIndex ?? this.currentNavIndex,
+      isDrawerOpen: isDrawerOpen ?? this.isDrawerOpen,
+      stats: stats ?? this.stats,
+      outletStats: outletStats ?? this.outletStats,
+      stores: stores ?? this.stores,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
 
   /// Get formatted date string for display
   String get formattedDate {
@@ -35,9 +74,9 @@ class DashboardViewModel extends ChangeNotifier {
       'Nov',
       'Dec',
     ];
-    final day = _selectedDate.day;
+    final day = selectedDate.day;
     final suffix = _getDaySuffix(day);
-    final month = months[_selectedDate.month - 1];
+    final month = months[selectedDate.month - 1];
     return '$day$suffix $month';
   }
 
@@ -55,18 +94,18 @@ class DashboardViewModel extends ChangeNotifier {
     }
   }
 
-  /// Static data for UI - Dashboard stats
-  DashboardStatsModel get stats => DashboardStatsModel.sample();
-
-  /// Static data for UI - Outlet statistics
-  List<OutletStatsModel> get outletStats => OutletStatsModel.getSampleData();
-
-  /// List of available outlets
+  /// List of available outlets including "All Outlets"
   List<String> get availableOutlets => [
     'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
+    ...stores.map((s) => s.name),
   ];
+
+  /// Get selected outlet name
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
 
   /// Stats tab labels
   List<String> get statsTabLabels => [
@@ -79,64 +118,129 @@ class DashboardViewModel extends ChangeNotifier {
     'Re-print',
   ];
 
-  // Actions
-  void setSelectedDate(DateTime date) {
-    _selectedDate = date;
-    notifyListeners();
+  /// Get the column header based on active tab
+  String get activeTabColumnHeader => statsTabLabels[activeStatsTab];
+}
+
+/// Dashboard ViewModel using Riverpod
+@riverpod
+class DashboardViewModel extends _$DashboardViewModel {
+  late DashboardRepository _dashboardRepo;
+  late StoreRepository _storeRepo;
+
+  @override
+  DashboardState build() {
+    _dashboardRepo = ref.watch(dashboardRepositoryProvider);
+    _storeRepo = ref.watch(storeRepositoryProvider);
+
+    // Load initial data
+    _loadInitialData();
+
+    return DashboardState(selectedDate: DateTime.now());
   }
 
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+  Future<void> _loadInitialData() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    // Load stores
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+
+    // Load dashboard stats
+    await _loadDashboardStats();
+
+    state = state.copyWith(isLoading: false);
+  }
+
+  Future<void> _loadDashboardStats() async {
+    final statsResult = await _dashboardRepo.getDashboardStats(
+      storeId: state.selectedStoreId,
+      date: state.selectedDate,
+    );
+
+    statsResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stats) => state = state.copyWith(stats: stats),
+    );
+
+    // Load outlet stats
+    final outletResult = await _dashboardRepo.getOutletStats(
+      date: state.selectedDate,
+    );
+
+    outletResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (outletStats) => state = state.copyWith(outletStats: outletStats),
+    );
+  }
+
+  Future<void> refresh() async {
+    state = state.copyWith(isLoading: true, error: null);
+    await _loadDashboardStats();
+    state = state.copyWith(isLoading: false);
+  }
+
+  void setSelectedDate(DateTime date) {
+    state = state.copyWith(selectedDate: date);
+    _loadDashboardStats();
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
+    }
+    _loadDashboardStats();
   }
 
   void setActiveStatsTab(int index) {
-    _activeStatsTab = index;
-    notifyListeners();
+    state = state.copyWith(activeStatsTab: index);
   }
 
   void setCurrentNavIndex(int index) {
-    _currentNavIndex = index;
-    notifyListeners();
+    state = state.copyWith(currentNavIndex: index);
   }
 
   void toggleDrawer() {
-    _isDrawerOpen = !_isDrawerOpen;
-    notifyListeners();
+    state = state.copyWith(isDrawerOpen: !state.isDrawerOpen);
   }
 
   void openDrawer() {
-    _isDrawerOpen = true;
-    notifyListeners();
+    state = state.copyWith(isDrawerOpen: true);
   }
 
   void closeDrawer() {
-    _isDrawerOpen = false;
-    notifyListeners();
+    state = state.copyWith(isDrawerOpen: false);
   }
 
   /// Get the value for a specific outlet based on the active tab
-  String getOutletValue(OutletStatsModel outlet) {
-    switch (_activeStatsTab) {
+  String getOutletValue(OutletStats outlet) {
+    switch (state.activeStatsTab) {
       case 0: // Orders
-        return outlet.orders.toString();
+        return outlet.totalOrders.toString();
       case 1: // Sales
-        return outlet.sales.toStringAsFixed(2);
+        return outlet.totalSales.toStringAsFixed(2);
       case 2: // Net Sales
         return outlet.netSales.toStringAsFixed(2);
-      case 3: // Tax
-        return outlet.tax.toStringAsFixed(2);
+      case 3: // Tax (calculated as sales - net)
+        return (outlet.totalSales - outlet.netSales).toStringAsFixed(2);
       case 4: // Discounts
-        return outlet.discounts.toStringAsFixed(2);
+        return '0.00'; // From actual discount field when available
       case 5: // Modified
-        return outlet.modified.toString();
+        return '0';
       case 6: // Re-print
-        return outlet.reprint.toString();
+        return '0';
       default:
-        return outlet.orders.toString();
+        return outlet.totalOrders.toString();
     }
   }
 
-  /// Get the column header based on active tab
-  String get activeTabColumnHeader => statsTabLabels[_activeStatsTab];
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
 }

@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/online_item_logs_viewmodel.dart';
 
 /// Online Item On/Off Logs page
-class OnlineItemLogsPage extends StatefulWidget {
+class OnlineItemLogsPage extends ConsumerStatefulWidget {
   const OnlineItemLogsPage({super.key});
 
   @override
-  State<OnlineItemLogsPage> createState() => _OnlineItemLogsPageState();
+  ConsumerState<OnlineItemLogsPage> createState() => _OnlineItemLogsPageState();
 }
 
-class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
-  late final OnlineItemLogsViewModel _viewModel;
+class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
   late final TextEditingController _searchItemController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = OnlineItemLogsViewModel();
     _searchItemController = TextEditingController();
   }
 
@@ -31,20 +30,19 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
+    final viewModelNotifier = ref.read(
+      onlineItemLogsViewModelProvider.notifier,
+    );
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'online_item_logs',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'online_item_logs',
+      selectedOutlet: viewModel.selectedOutlet,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -149,11 +147,16 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
+    final viewModelNotifier = ref.read(
+      onlineItemLogsViewModelProvider.notifier,
+    );
+
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: _viewModel.toggleSearchExpanded,
+          onTap: viewModelNotifier.toggleSearchExpanded,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -183,7 +186,7 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  _viewModel.isSearchExpanded
+                  viewModel.isSearchExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                   color: colorScheme.onSurfaceVariant,
@@ -193,13 +196,18 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (_viewModel.isSearchExpanded)
+        if (viewModel.isSearchExpanded)
           _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
+    final viewModelNotifier = ref.read(
+      onlineItemLogsViewModelProvider.notifier,
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -228,8 +236,8 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: _viewModel.fromDate,
-            onDateSelected: _viewModel.setFromDate,
+            date: viewModel.fromDate,
+            onDateSelected: viewModelNotifier.setFromDate,
           ),
           const SizedBox(height: 16),
           // To Date
@@ -244,8 +252,8 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: _viewModel.toDate,
-            onDateSelected: _viewModel.setToDate,
+            date: viewModel.toDate,
+            onDateSelected: viewModelNotifier.setToDate,
           ),
           const SizedBox(height: 16),
           // Select Outlet
@@ -260,9 +268,9 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
           _buildDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedOutletFilter,
-            items: _viewModel.outlets,
-            onChanged: _viewModel.setSelectedOutletFilter,
+            value: viewModel.selectedOutletFilter,
+            items: viewModel.outlets,
+            onChanged: viewModelNotifier.setSelectedOutletFilter,
           ),
           const SizedBox(height: 16),
           // Search ItemID / Name
@@ -276,7 +284,7 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _searchItemController,
-            onChanged: _viewModel.setSearchItemIdName,
+            onChanged: viewModelNotifier.setSearchItemIdName,
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -307,7 +315,7 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  _viewModel.search();
+                  viewModelNotifier.search();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -332,7 +340,7 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
               OutlinedButton(
                 onPressed: () {
                   _searchItemController.clear();
-                  _viewModel.reset();
+                  viewModelNotifier.reset();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -363,6 +371,8 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
+    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
+
     return InkWell(
       onTap: () => _showRestaurantSelector(colorScheme, textTheme),
       child: Container(
@@ -375,7 +385,7 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
           children: [
             Expanded(
               child: Text(
-                _viewModel.restaurantDisplayText,
+                viewModel.restaurantDisplayText,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -401,6 +411,11 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final viewModel = ref.watch(onlineItemLogsViewModelProvider);
+            final viewModelNotifier = ref.read(
+              onlineItemLogsViewModelProvider.notifier,
+            );
+
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Column(
@@ -417,10 +432,10 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
                   const SizedBox(height: 16),
                   // All checkbox
                   CheckboxListTile(
-                    value: _viewModel.isAllRestaurantsSelected,
+                    value: viewModel.isAllRestaurantsSelected,
                     onChanged: (value) {
                       setModalState(() {
-                        _viewModel.toggleAllRestaurants();
+                        viewModelNotifier.toggleAllRestaurants();
                       });
                     },
                     title: Text(
@@ -434,16 +449,14 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
                   ),
                   const Divider(),
                   // Individual restaurant checkboxes
-                  ...(_viewModel.restaurants.where(
+                  ...(viewModel.restaurants.where(
                     (r) => r != 'Please Select',
                   )).map((restaurant) {
                     return CheckboxListTile(
-                      value: _viewModel.selectedRestaurants.contains(
-                        restaurant,
-                      ),
+                      value: viewModel.selectedRestaurants.contains(restaurant),
                       onChanged: (value) {
                         setModalState(() {
-                          _viewModel.toggleRestaurant(restaurant);
+                          viewModelNotifier.toggleRestaurant(restaurant);
                         });
                       },
                       title: Text(
@@ -579,7 +592,9 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    if (_viewModel.isLoading) {
+    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
+
+    if (viewModel.isLoading) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -588,7 +603,7 @@ class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
       );
     }
 
-    if (_viewModel.logs.isEmpty) {
+    if (viewModel.logs.isEmpty) {
       return _buildEmptyState(colorScheme, textTheme);
     }
 

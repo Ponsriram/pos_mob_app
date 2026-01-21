@@ -1,154 +1,169 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/repositories/store_repository.dart';
+import '../../../core/providers/repository_providers.dart';
+
+part 'menu_trigger_logs_viewmodel.g.dart';
+
+/// State class for Menu Trigger Logs
+class MenuTriggerLogsState {
+  final String selectedOutlet;
+  final List<String> availableOutlets;
+  final bool isSearchExpanded;
+  final String selectedRestaurant;
+  final List<String> restaurants;
+  final DateTime? fromDate;
+  final DateTime? toDate;
+  final String selectedThirdpartyUser;
+  final List<String> thirdpartyUsers;
+  final String clientRestaurantId;
+  final String requestId;
+  final String selectedStatus;
+  final List<String> statuses;
+  final List<Map<String, dynamic>> logs;
+  final bool isLoading;
+  final String? error;
+
+  const MenuTriggerLogsState({
+    this.selectedOutlet = 'All Outlets',
+    this.availableOutlets = const ['All Outlets', 'Outlet 1', 'Outlet 2'],
+    this.isSearchExpanded = true,
+    this.selectedRestaurant = 'Please Select',
+    this.restaurants = const [
+      'Please Select',
+      '363317 - Aarthi cake Magic',
+      '383514 - Ambattur Aarthi sweets and bakery',
+    ],
+    this.fromDate,
+    this.toDate,
+    this.selectedThirdpartyUser = 'Select Thirdparty User',
+    this.thirdpartyUsers = const [
+      'Select Thirdparty User',
+      'Swiggy',
+      'PayTM',
+      'Ewards Online',
+      'Dineout Ordering',
+      'Dotpe',
+      'Dukaan',
+      'Menu QR',
+    ],
+    this.clientRestaurantId = '',
+    this.requestId = '',
+    this.selectedStatus = 'All',
+    this.statuses = const ['All', 'Success', 'Failed', 'In Process'],
+    this.logs = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  MenuTriggerLogsState copyWith({
+    String? selectedOutlet,
+    List<String>? availableOutlets,
+    bool? isSearchExpanded,
+    String? selectedRestaurant,
+    List<String>? restaurants,
+    DateTime? fromDate,
+    DateTime? toDate,
+    String? selectedThirdpartyUser,
+    List<String>? thirdpartyUsers,
+    String? clientRestaurantId,
+    String? requestId,
+    String? selectedStatus,
+    List<String>? statuses,
+    List<Map<String, dynamic>>? logs,
+    bool? isLoading,
+    String? error,
+  }) {
+    return MenuTriggerLogsState(
+      selectedOutlet: selectedOutlet ?? this.selectedOutlet,
+      availableOutlets: availableOutlets ?? this.availableOutlets,
+      isSearchExpanded: isSearchExpanded ?? this.isSearchExpanded,
+      selectedRestaurant: selectedRestaurant ?? this.selectedRestaurant,
+      restaurants: restaurants ?? this.restaurants,
+      fromDate: fromDate ?? this.fromDate,
+      toDate: toDate ?? this.toDate,
+      selectedThirdpartyUser:
+          selectedThirdpartyUser ?? this.selectedThirdpartyUser,
+      thirdpartyUsers: thirdpartyUsers ?? this.thirdpartyUsers,
+      clientRestaurantId: clientRestaurantId ?? this.clientRestaurantId,
+      requestId: requestId ?? this.requestId,
+      selectedStatus: selectedStatus ?? this.selectedStatus,
+      statuses: statuses ?? this.statuses,
+      logs: logs ?? this.logs,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+}
 
 /// ViewModel for Menu Trigger Logs page
-class MenuTriggerLogsViewModel extends ChangeNotifier {
-  // Outlet selection
-  String _selectedOutlet = 'All Outlets';
-  final List<String> _availableOutlets = [
-    'All Outlets',
-    'Outlet 1',
-    'Outlet 2',
-  ];
+@riverpod
+class MenuTriggerLogsViewModel extends _$MenuTriggerLogsViewModel {
+  late final StoreRepository _storeRepo;
 
-  String get selectedOutlet => _selectedOutlet;
-  List<String> get availableOutlets => _availableOutlets;
+  @override
+  MenuTriggerLogsState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    return const MenuTriggerLogsState();
+  }
 
   void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+    state = state.copyWith(selectedOutlet: outlet);
   }
-
-  // Search section expansion
-  bool _isSearchExpanded = true;
-
-  bool get isSearchExpanded => _isSearchExpanded;
 
   void toggleSearchExpanded() {
-    _isSearchExpanded = !_isSearchExpanded;
-    notifyListeners();
+    state = state.copyWith(isSearchExpanded: !state.isSearchExpanded);
   }
-
-  // Select Restaurant filter
-  String _selectedRestaurant = 'Please Select';
-  final List<String> _restaurants = [
-    'Please Select',
-    '363317 - Aarthi cake Magic',
-    '383514 - Ambattur Aarthi sweets and bakery',
-  ];
-
-  String get selectedRestaurant => _selectedRestaurant;
-  List<String> get restaurants => _restaurants;
 
   void setSelectedRestaurant(String restaurant) {
-    _selectedRestaurant = restaurant;
-    notifyListeners();
+    state = state.copyWith(selectedRestaurant: restaurant);
   }
-
-  // From Date filter
-  DateTime? _fromDate;
-
-  DateTime? get fromDate => _fromDate;
 
   void setFromDate(DateTime? date) {
-    _fromDate = date;
-    notifyListeners();
+    state = state.copyWith(fromDate: date);
   }
-
-  // To Date filter
-  DateTime? _toDate;
-
-  DateTime? get toDate => _toDate;
 
   void setToDate(DateTime? date) {
-    _toDate = date;
-    notifyListeners();
+    state = state.copyWith(toDate: date);
   }
-
-  // Select Thirdparty User filter
-  String _selectedThirdpartyUser = 'Select Thirdparty User';
-  final List<String> _thirdpartyUsers = [
-    'Select Thirdparty User',
-    'Swiggy',
-    'PayTM',
-    'Ewards Online',
-    'Dineout Ordering',
-    'Dotpe',
-    'Dukaan',
-    'Menu QR',
-  ];
-
-  String get selectedThirdpartyUser => _selectedThirdpartyUser;
-  List<String> get thirdpartyUsers => _thirdpartyUsers;
 
   void setSelectedThirdpartyUser(String user) {
-    _selectedThirdpartyUser = user;
-    notifyListeners();
+    state = state.copyWith(selectedThirdpartyUser: user);
   }
-
-  // Client Restaurant ID filter
-  String _clientRestaurantId = '';
-
-  String get clientRestaurantId => _clientRestaurantId;
 
   void setClientRestaurantId(String id) {
-    _clientRestaurantId = id;
-    notifyListeners();
+    state = state.copyWith(clientRestaurantId: id);
   }
-
-  // Request Id filter
-  String _requestId = '';
-
-  String get requestId => _requestId;
 
   void setRequestId(String id) {
-    _requestId = id;
-    notifyListeners();
+    state = state.copyWith(requestId: id);
   }
-
-  // Status filter
-  String _selectedStatus = 'All';
-  final List<String> _statuses = ['All', 'Success', 'Failed', 'In Process'];
-
-  String get selectedStatus => _selectedStatus;
-  List<String> get statuses => _statuses;
 
   void setSelectedStatus(String status) {
-    _selectedStatus = status;
-    notifyListeners();
+    state = state.copyWith(selectedStatus: status);
   }
 
-  // Logs list (empty for now - will be populated from API)
-  List<Map<String, dynamic>> _logs = [];
+  Future<void> search() async {
+    state = state.copyWith(isLoading: true, error: null);
 
-  List<Map<String, dynamic>> get logs => _logs;
+    // TODO: Implement API call to search logs via repository
+    await Future.delayed(const Duration(milliseconds: 500));
 
-  // Loading state
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
-  // Search functionality
-  void search() {
-    _isLoading = true;
-    notifyListeners();
-
-    // TODO: Implement API call to search logs
-    // For now, just simulate a search
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _logs = []; // Results would come from API
-      _isLoading = false;
-      notifyListeners();
-    });
+    state = state.copyWith(logs: [], isLoading: false);
   }
 
   void reset() {
-    _selectedRestaurant = 'Please Select';
-    _fromDate = null;
-    _toDate = null;
-    _selectedThirdpartyUser = 'Select Thirdparty User';
-    _clientRestaurantId = '';
-    _requestId = '';
-    _selectedStatus = 'All';
-    notifyListeners();
+    state = state.copyWith(
+      selectedRestaurant: 'Please Select',
+      fromDate: null,
+      toDate: null,
+      selectedThirdpartyUser: 'Select Thirdparty User',
+      clientRestaurantId: '',
+      requestId: '',
+      selectedStatus: 'All',
+    );
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

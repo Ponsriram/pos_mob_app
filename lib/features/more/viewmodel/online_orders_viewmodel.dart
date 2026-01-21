@@ -1,142 +1,225 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/order_repository.dart'
+    hide OrderStatus;
+import 'package:pos_app/core/repositories/store_repository.dart';
 import '../model/online_order_model.dart';
 
-/// ViewModel for the Online Orders Activity screen
-class OnlineOrdersViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
-  String _selectedPlatformId = 'all';
-  RestaurantModel? _selectedRestaurant;
-  RecordType _selectedRecordType = RecordType.last2DaysRecords;
-  OrderStatus _selectedStatus = OrderStatus.all;
-  String _orderNoFilter = '';
-  DateTime _startDate = DateTime.now().subtract(const Duration(days: 1));
-  DateTime _endDate = DateTime.now();
-  bool _isChartExpanded = false;
-  bool _isLoading = false;
-  List<OnlineOrderModel> _orders = [];
-  List<RestaurantModel> _restaurants = [];
-  List<OrderPlatformModel> _platforms = [];
+part 'online_orders_viewmodel.g.dart';
 
-  OnlineOrdersViewModel() {
-    _restaurants = RestaurantModel.getDefaultRestaurants();
-    _platforms = OrderPlatformModel.getDefaultPlatforms();
-    if (_restaurants.isNotEmpty) {
-      _selectedRestaurant = _restaurants.first;
-    }
+/// State for Online Orders Activity screen
+class OnlineOrdersState {
+  final String? selectedStoreId;
+  final String selectedPlatformId;
+  final RecordType selectedRecordType;
+  final OrderStatus selectedStatus;
+  final String orderNoFilter;
+  final DateTime startDate;
+  final DateTime endDate;
+  final bool isChartExpanded;
+  final bool isLoading;
+  final List<OrderModel> orders;
+  final List<StoreModel> stores;
+  final List<OrderPlatformModel> platforms;
+  final String? error;
+
+  OnlineOrdersState({
+    this.selectedStoreId,
+    this.selectedPlatformId = 'all',
+    this.selectedRecordType = RecordType.last2DaysRecords,
+    this.selectedStatus = OrderStatus.all,
+    this.orderNoFilter = '',
+    DateTime? startDate,
+    DateTime? endDate,
+    this.isChartExpanded = false,
+    this.isLoading = false,
+    this.orders = const [],
+    this.stores = const [],
+    this.platforms = const [],
+    this.error,
+  }) : startDate =
+           startDate ?? DateTime.now().subtract(const Duration(days: 1)),
+       endDate = endDate ?? DateTime.now();
+
+  OnlineOrdersState copyWith({
+    String? selectedStoreId,
+    String? selectedPlatformId,
+    RecordType? selectedRecordType,
+    OrderStatus? selectedStatus,
+    String? orderNoFilter,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool? isChartExpanded,
+    bool? isLoading,
+    List<OrderModel>? orders,
+    List<StoreModel>? stores,
+    List<OrderPlatformModel>? platforms,
+    String? error,
+  }) {
+    return OnlineOrdersState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      selectedPlatformId: selectedPlatformId ?? this.selectedPlatformId,
+      selectedRecordType: selectedRecordType ?? this.selectedRecordType,
+      selectedStatus: selectedStatus ?? this.selectedStatus,
+      orderNoFilter: orderNoFilter ?? this.orderNoFilter,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      isChartExpanded: isChartExpanded ?? this.isChartExpanded,
+      isLoading: isLoading ?? this.isLoading,
+      orders: orders ?? this.orders,
+      stores: stores ?? this.stores,
+      platforms: platforms ?? this.platforms,
+      error: error,
+    );
   }
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
-  String get selectedPlatformId => _selectedPlatformId;
-
-  /// List of available outlets
+  /// List of available outlets including "All Outlets"
   List<String> get availableOutlets => [
     'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
+    ...stores.map((s) => s.name),
   ];
-  RestaurantModel? get selectedRestaurant => _selectedRestaurant;
-  RecordType get selectedRecordType => _selectedRecordType;
-  OrderStatus get selectedStatus => _selectedStatus;
-  String get orderNoFilter => _orderNoFilter;
-  DateTime get startDate => _startDate;
-  DateTime get endDate => _endDate;
-  bool get isChartExpanded => _isChartExpanded;
-  bool get isLoading => _isLoading;
-  List<OnlineOrderModel> get orders => _orders;
-  List<RestaurantModel> get restaurants => _restaurants;
-  List<OrderPlatformModel> get platforms => _platforms;
+
+  /// Selected outlet name for display
+  String get selectedOutlet {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+
+  /// Alias for selectedOutlet
+  String get selectedRestaurant => selectedOutlet;
+
+  /// Restaurant list for dropdowns
+  List<String> get restaurants => availableOutlets;
+
+  /// Get selected outlet name
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
 
   /// Check if date range fields should be shown
-  bool get showDateRange => _selectedRecordType == RecordType.getOldRecords;
+  bool get showDateRange => selectedRecordType == RecordType.getOldRecords;
 
   /// Get filtered orders count
-  int get filteredOrdersCount => _orders.length;
+  int get filteredOrdersCount => orders.length;
+}
 
-  /// Update selected outlet
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+/// ViewModel for the Online Orders Activity screen using Riverpod
+@riverpod
+class OnlineOrdersViewModel extends _$OnlineOrdersViewModel {
+  late OrderRepository _orderRepo;
+  late StoreRepository _storeRepo;
+
+  @override
+  OnlineOrdersState build() {
+    _orderRepo = ref.watch(orderRepositoryProvider);
+    _storeRepo = ref.watch(storeRepositoryProvider);
+
+    _loadInitialData();
+
+    return OnlineOrdersState(
+      platforms: OrderPlatformModel.getDefaultPlatforms(),
+    );
   }
 
-  /// Update selected platform
-  void setSelectedPlatform(String platformId) {
-    _selectedPlatformId = platformId;
-    notifyListeners();
+  Future<void> _loadInitialData() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    // Load stores
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+
+    // Load online orders
+    await _loadOnlineOrders();
+
+    state = state.copyWith(isLoading: false);
   }
 
-  /// Update selected restaurant
-  void setSelectedRestaurant(RestaurantModel? restaurant) {
-    _selectedRestaurant = restaurant;
-    notifyListeners();
+  Future<void> _loadOnlineOrders() async {
+    // Skip loading if no store selected yet
+    final storeId = state.selectedStoreId;
+    if (storeId == null) {
+      state = state.copyWith(orders: []);
+      return;
+    }
+
+    final result = await _orderRepo.getOnlineOrders(storeId: storeId);
+
+    result.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (orders) => state = state.copyWith(orders: orders),
+    );
   }
 
-  /// Update selected record type
-  void setSelectedRecordType(RecordType recordType) {
-    _selectedRecordType = recordType;
-    notifyListeners();
-  }
-
-  /// Update selected status
-  void setSelectedStatus(OrderStatus status) {
-    _selectedStatus = status;
-    notifyListeners();
-  }
-
-  /// Update order number filter
-  void setOrderNoFilter(String orderNo) {
-    _orderNoFilter = orderNo;
-    notifyListeners();
-  }
-
-  /// Update start date
-  void setStartDate(DateTime date) {
-    _startDate = date;
-    notifyListeners();
-  }
-
-  /// Update end date
-  void setEndDate(DateTime date) {
-    _endDate = date;
-    notifyListeners();
-  }
-
-  /// Toggle chart expansion
-  void toggleChartExpansion() {
-    _isChartExpanded = !_isChartExpanded;
-    notifyListeners();
-  }
-
-  /// Apply filters and fetch orders
-  Future<void> applyFilters() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // TODO: Implement API call to fetch orders with filters
-      await Future.delayed(const Duration(milliseconds: 500));
-      _orders = []; // Replace with actual API response
-    } catch (e) {
-      // Handle error
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
     }
   }
 
-  /// Reset all filters and show all orders
+  /// Alias for setSelectedOutlet
+  void setSelectedRestaurant(String restaurantName) =>
+      setSelectedOutlet(restaurantName);
+
+  void setSelectedPlatform(String platformId) {
+    state = state.copyWith(selectedPlatformId: platformId);
+  }
+
+  void setSelectedRecordType(RecordType recordType) {
+    state = state.copyWith(selectedRecordType: recordType);
+  }
+
+  void setSelectedStatus(OrderStatus status) {
+    state = state.copyWith(selectedStatus: status);
+  }
+
+  void setOrderNoFilter(String orderNo) {
+    state = state.copyWith(orderNoFilter: orderNo);
+  }
+
+  void setStartDate(DateTime date) {
+    state = state.copyWith(startDate: date);
+  }
+
+  void setEndDate(DateTime date) {
+    state = state.copyWith(endDate: date);
+  }
+
+  void toggleChartExpansion() {
+    state = state.copyWith(isChartExpanded: !state.isChartExpanded);
+  }
+
+  Future<void> applyFilters() async {
+    state = state.copyWith(isLoading: true, error: null);
+    await _loadOnlineOrders();
+    state = state.copyWith(isLoading: false);
+  }
+
   void showAll() {
-    _selectedPlatformId = 'all';
-    _selectedRecordType = RecordType.last2DaysRecords;
-    _selectedStatus = OrderStatus.all;
-    _orderNoFilter = '';
-    _startDate = DateTime.now().subtract(const Duration(days: 1));
-    _endDate = DateTime.now();
+    state = state.copyWith(
+      selectedPlatformId: 'all',
+      selectedRecordType: RecordType.last2DaysRecords,
+      selectedStatus: OrderStatus.all,
+      orderNoFilter: '',
+      startDate: DateTime.now().subtract(const Duration(days: 1)),
+      endDate: DateTime.now(),
+    );
     applyFilters();
   }
 
-  /// Refresh data
   Future<void> refresh() async {
     await applyFilters();
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

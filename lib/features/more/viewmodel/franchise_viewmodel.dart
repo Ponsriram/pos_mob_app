@@ -1,78 +1,78 @@
-import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 import '../model/franchise_model.dart';
 
-class FranchiseViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
-  final List<String> _availableOutlets = [
+part 'franchise_viewmodel.g.dart';
+
+/// State for Franchise screen
+class FranchiseState {
+  final String? selectedStoreId;
+  final String nameFilter;
+  final String refIdFilter;
+  final List<FranchiseOutlet> franchises;
+  final List<FranchiseOutlet> filteredFranchises;
+  final List<StoreModel> stores;
+  final bool isLoading;
+  final String? error;
+
+  const FranchiseState({
+    this.selectedStoreId,
+    this.nameFilter = '',
+    this.refIdFilter = '',
+    this.franchises = const [],
+    this.filteredFranchises = const [],
+    this.stores = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  FranchiseState copyWith({
+    String? selectedStoreId,
+    String? nameFilter,
+    String? refIdFilter,
+    List<FranchiseOutlet>? franchises,
+    List<FranchiseOutlet>? filteredFranchises,
+    List<StoreModel>? stores,
+    bool? isLoading,
+    String? error,
+  }) {
+    return FranchiseState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      nameFilter: nameFilter ?? this.nameFilter,
+      refIdFilter: refIdFilter ?? this.refIdFilter,
+      franchises: franchises ?? this.franchises,
+      filteredFranchises: filteredFranchises ?? this.filteredFranchises,
+      stores: stores ?? this.stores,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+
+  List<String> get availableOutlets => [
     'All Outlets',
-    'Outlet 1',
-    'Outlet 2',
+    ...stores.map((s) => s.name),
   ];
 
-  String _nameFilter = '';
-  String _refIdFilter = '';
-
-  List<FranchiseOutlet> _franchises = [];
-  List<FranchiseOutlet> _filteredFranchises = [];
-
-  FranchiseViewModel() {
-    _initializeData();
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
   }
+}
 
-  String get selectedOutlet => _selectedOutlet;
-  List<String> get availableOutlets => _availableOutlets;
-  String get nameFilter => _nameFilter;
-  String get refIdFilter => _refIdFilter;
-  List<FranchiseOutlet> get filteredFranchises => _filteredFranchises;
+/// ViewModel for Franchise screen using Riverpod
+@riverpod
+class FranchiseViewModel extends _$FranchiseViewModel {
+  late StoreRepository _storeRepo;
 
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
-  }
+  @override
+  FranchiseState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
 
-  void setNameFilter(String value) {
-    _nameFilter = value;
-  }
+    _loadInitialData();
 
-  void setRefIdFilter(String value) {
-    _refIdFilter = value;
-  }
-
-  void search() {
-    _filteredFranchises = _franchises.where((franchise) {
-      final matchesName =
-          _nameFilter.isEmpty ||
-          franchise.name.toLowerCase().contains(_nameFilter.toLowerCase());
-      final matchesRefId =
-          _refIdFilter.isEmpty ||
-          franchise.refId.toLowerCase().contains(_refIdFilter.toLowerCase());
-      return matchesName && matchesRefId;
-    }).toList();
-    notifyListeners();
-  }
-
-  void showAll() {
-    _nameFilter = '';
-    _refIdFilter = '';
-    _filteredFranchises = List.from(_franchises);
-    notifyListeners();
-  }
-
-  void toggleLock(String id) {
-    final index = _franchises.indexWhere((f) => f.id == id);
-    if (index != -1) {
-      _franchises[index] = FranchiseOutlet(
-        id: _franchises[index].id,
-        name: _franchises[index].name,
-        refId: _franchises[index].refId,
-        isLocked: !_franchises[index].isLocked,
-      );
-      search();
-    }
-  }
-
-  void _initializeData() {
-    _franchises = [
+    final defaultFranchises = [
       FranchiseOutlet(id: '1', name: 'Aarthi cake Magic', refId: '363317'),
       FranchiseOutlet(
         id: '2',
@@ -80,6 +80,78 @@ class FranchiseViewModel extends ChangeNotifier {
         refId: '383514',
       ),
     ];
-    _filteredFranchises = List.from(_franchises);
+
+    return FranchiseState(
+      franchises: defaultFranchises,
+      filteredFranchises: defaultFranchises,
+    );
+  }
+
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
+    }
+  }
+
+  void setNameFilter(String value) {
+    state = state.copyWith(nameFilter: value);
+  }
+
+  void setRefIdFilter(String value) {
+    state = state.copyWith(refIdFilter: value);
+  }
+
+  void search() {
+    final filtered = state.franchises.where((franchise) {
+      final matchesName =
+          state.nameFilter.isEmpty ||
+          franchise.name.toLowerCase().contains(state.nameFilter.toLowerCase());
+      final matchesRefId =
+          state.refIdFilter.isEmpty ||
+          franchise.refId.toLowerCase().contains(
+            state.refIdFilter.toLowerCase(),
+          );
+      return matchesName && matchesRefId;
+    }).toList();
+    state = state.copyWith(filteredFranchises: filtered);
+  }
+
+  void showAll() {
+    state = state.copyWith(
+      nameFilter: '',
+      refIdFilter: '',
+      filteredFranchises: state.franchises,
+    );
+  }
+
+  void toggleLock(String id) {
+    final updatedFranchises = state.franchises.map((f) {
+      if (f.id == id) {
+        return FranchiseOutlet(
+          id: f.id,
+          name: f.name,
+          refId: f.refId,
+          isLocked: !f.isLocked,
+        );
+      }
+      return f;
+    }).toList();
+    state = state.copyWith(franchises: updatedFranchises);
+    search();
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

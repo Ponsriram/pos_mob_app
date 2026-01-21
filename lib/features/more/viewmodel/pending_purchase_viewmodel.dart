@@ -1,100 +1,153 @@
-import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 import '../model/pending_purchase_model.dart';
 
-/// ViewModel for the Pending Purchase page
-class PendingPurchaseViewModel extends ChangeNotifier {
-  // State
-  String _selectedOutlet = 'All Outlets';
-  String _selectedRestaurant = 'Aarthi cake Magic';
-  DateTime _startDate = DateTime.now().subtract(const Duration(days: 7));
-  DateTime _endDate = DateTime.now();
-  bool _isLoading = false;
-  List<PendingPurchaseModel> _purchases = [];
+part 'pending_purchase_viewmodel.g.dart';
 
-  // Available options
-  final List<String> _outlets = ['All Outlets', 'Outlet 1', 'Outlet 2'];
-  final List<String> _restaurants = [
+/// State for the Pending Purchase page
+class PendingPurchaseState {
+  final String? selectedStoreId;
+  final List<StoreModel> stores;
+  final String selectedRestaurant;
+  final DateTime startDate;
+  final DateTime endDate;
+  final bool isLoading;
+  final List<PendingPurchaseModel> purchases;
+  final String? error;
+
+  PendingPurchaseState({
+    this.selectedStoreId,
+    this.stores = const [],
+    this.selectedRestaurant = 'Aarthi cake Magic',
+    DateTime? startDate,
+    DateTime? endDate,
+    this.isLoading = false,
+    this.purchases = const [],
+    this.error,
+  }) : startDate =
+           startDate ?? DateTime.now().subtract(const Duration(days: 7)),
+       endDate = endDate ?? DateTime.now();
+
+  PendingPurchaseState copyWith({
+    String? selectedStoreId,
+    List<StoreModel>? stores,
+    String? selectedRestaurant,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool? isLoading,
+    List<PendingPurchaseModel>? purchases,
+    String? error,
+  }) {
+    return PendingPurchaseState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      stores: stores ?? this.stores,
+      selectedRestaurant: selectedRestaurant ?? this.selectedRestaurant,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      isLoading: isLoading ?? this.isLoading,
+      purchases: purchases ?? this.purchases,
+      error: error,
+    );
+  }
+
+  List<String> get availableOutlets => [
+    'All Outlets',
+    ...stores.map((s) => s.name),
+  ];
+
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+
+  /// Alias for selectedOutletName
+  String get selectedOutlet => selectedOutletName;
+
+  /// Alias for availableOutlets
+  List<String> get outlets => availableOutlets;
+
+  List<String> get restaurants => [
     'Aarthi cake Magic',
     'Restaurant 1',
     'Restaurant 2',
   ];
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
-  String get selectedRestaurant => _selectedRestaurant;
-  DateTime get startDate => _startDate;
-  DateTime get endDate => _endDate;
-  bool get isLoading => _isLoading;
-  List<PendingPurchaseModel> get purchases => _purchases;
-  List<String> get outlets => _outlets;
-  List<String> get restaurants => _restaurants;
-  bool get isEmpty => _purchases.isEmpty;
+  bool get isEmpty => purchases.isEmpty;
+}
 
-  // Setters
-  void setSelectedOutlet(String outlet) {
-    if (_selectedOutlet != outlet) {
-      _selectedOutlet = outlet;
-      notifyListeners();
+/// ViewModel for the Pending Purchase page using Riverpod
+@riverpod
+class PendingPurchaseViewModel extends _$PendingPurchaseViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  PendingPurchaseState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    _loadInitialData();
+    return PendingPurchaseState();
+  }
+
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
     }
   }
 
   void setSelectedRestaurant(String restaurant) {
-    if (_selectedRestaurant != restaurant) {
-      _selectedRestaurant = restaurant;
-      notifyListeners();
-    }
+    state = state.copyWith(selectedRestaurant: restaurant);
   }
 
   void setStartDate(DateTime date) {
-    if (_startDate != date) {
-      _startDate = date;
-      notifyListeners();
-    }
+    state = state.copyWith(startDate: date);
   }
 
   void setEndDate(DateTime date) {
-    if (_endDate != date) {
-      _endDate = date;
-      notifyListeners();
-    }
+    state = state.copyWith(endDate: date);
   }
 
-  // Actions
   Future<void> search() async {
-    _isLoading = true;
-    notifyListeners();
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
-
-      // For now, return empty list (no data)
-      _purchases = [];
+      state = state.copyWith(purchases: [], isLoading: false);
     } catch (e) {
-      // Handle error
-      _purchases = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(
+        purchases: [],
+        isLoading: false,
+        error: e.toString(),
+      );
     }
   }
 
   Future<void> showAll() async {
-    // Reset filters
-    _selectedRestaurant = _restaurants.first;
-    _startDate = DateTime.now().subtract(const Duration(days: 30));
-    _endDate = DateTime.now();
-
+    state = state.copyWith(
+      selectedRestaurant: state.restaurants.first,
+      startDate: DateTime.now().subtract(const Duration(days: 30)),
+      endDate: DateTime.now(),
+    );
     await search();
   }
 
   void reset() {
-    _selectedOutlet = 'All Outlets';
-    _selectedRestaurant = _restaurants.first;
-    _startDate = DateTime.now().subtract(const Duration(days: 7));
-    _endDate = DateTime.now();
-    _purchases = [];
-    _isLoading = false;
-    notifyListeners();
+    state = PendingPurchaseState(stores: state.stores);
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

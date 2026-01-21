@@ -95,6 +95,7 @@ class _CommonScaffoldState extends ConsumerState<CommonScaffold> {
             context,
             currentItemId: widget.activeItemId,
             targetItemId: itemId,
+            ref: ref,
           );
         }
       },

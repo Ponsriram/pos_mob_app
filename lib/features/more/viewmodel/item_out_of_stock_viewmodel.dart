@@ -1,139 +1,188 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/repositories/store_repository.dart';
+import '../../../core/providers/repository_providers.dart';
+
+part 'item_out_of_stock_viewmodel.g.dart';
+
+/// State class for Item Out-Of-Stock Tracking
+class ItemOutOfStockState {
+  final String selectedOutlet;
+  final int selectedMainTabIndex; // 0 for Items, 1 for Addons
+  final int selectedViewTabIndex; // 0 for Restaurant Wise, 1 for Item Wise
+  final String selectedRestaurant;
+  final String selectedCategory;
+  final String itemName;
+  final String selectedBrand;
+  final String selectedOffDuration;
+  final bool showRestaurantsWithAllItemsInStock;
+  final List<String> availableOutlets;
+  final List<String> restaurants;
+  final List<String> categories;
+  final List<String> brands;
+  final List<String> offDurationOptions;
+  final bool isLoading;
+  final String? error;
+
+  const ItemOutOfStockState({
+    this.selectedOutlet = 'All Outlets',
+    this.selectedMainTabIndex = 0,
+    this.selectedViewTabIndex = 0,
+    this.selectedRestaurant = 'All',
+    this.selectedCategory = 'All',
+    this.itemName = '',
+    this.selectedBrand = 'All',
+    this.selectedOffDuration = 'Select',
+    this.showRestaurantsWithAllItemsInStock = false,
+    this.availableOutlets = const [
+      'All Outlets',
+      'Aarthi cake Magic',
+      'Ambattur Aarthi sweets and bakery',
+    ],
+    this.restaurants = const [
+      'All',
+      'Aarthi cake Magic',
+      'Ambattur Aarthi sweets and bakery',
+    ],
+    this.categories = const [
+      'All',
+      'Beverages',
+      'Snacks',
+      'Main Course',
+      'Desserts',
+    ],
+    this.brands = const ['All', 'Brand A', 'Brand B', 'Brand C'],
+    this.offDurationOptions = const [
+      'Select',
+      '30 minutes',
+      '1 hour',
+      '2 hours',
+      '4 hours',
+      '8 hours',
+      '24 hours',
+    ],
+    this.isLoading = false,
+    this.error,
+  });
+
+  ItemOutOfStockState copyWith({
+    String? selectedOutlet,
+    int? selectedMainTabIndex,
+    int? selectedViewTabIndex,
+    String? selectedRestaurant,
+    String? selectedCategory,
+    String? itemName,
+    String? selectedBrand,
+    String? selectedOffDuration,
+    bool? showRestaurantsWithAllItemsInStock,
+    List<String>? availableOutlets,
+    List<String>? restaurants,
+    List<String>? categories,
+    List<String>? brands,
+    List<String>? offDurationOptions,
+    bool? isLoading,
+    String? error,
+  }) {
+    return ItemOutOfStockState(
+      selectedOutlet: selectedOutlet ?? this.selectedOutlet,
+      selectedMainTabIndex: selectedMainTabIndex ?? this.selectedMainTabIndex,
+      selectedViewTabIndex: selectedViewTabIndex ?? this.selectedViewTabIndex,
+      selectedRestaurant: selectedRestaurant ?? this.selectedRestaurant,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
+      itemName: itemName ?? this.itemName,
+      selectedBrand: selectedBrand ?? this.selectedBrand,
+      selectedOffDuration: selectedOffDuration ?? this.selectedOffDuration,
+      showRestaurantsWithAllItemsInStock:
+          showRestaurantsWithAllItemsInStock ??
+          this.showRestaurantsWithAllItemsInStock,
+      availableOutlets: availableOutlets ?? this.availableOutlets,
+      restaurants: restaurants ?? this.restaurants,
+      categories: categories ?? this.categories,
+      brands: brands ?? this.brands,
+      offDurationOptions: offDurationOptions ?? this.offDurationOptions,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+}
 
 /// ViewModel for the Item Out-Of-Stock Tracking screen
-class ItemOutOfStockViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
-  int _selectedMainTabIndex = 0; // 0 for Items, 1 for Addons
-  int _selectedViewTabIndex = 0; // 0 for Restaurant Wise, 1 for Item Wise
+@riverpod
+class ItemOutOfStockViewModel extends _$ItemOutOfStockViewModel {
+  late final StoreRepository _storeRepo;
 
-  // Filter state
-  String _selectedRestaurant = 'All';
-  String _selectedCategory = 'All';
-  String _itemName = '';
-  String _selectedBrand = 'All';
-  String _selectedOffDuration = 'Select';
-  bool _showRestaurantsWithAllItemsInStock = false;
+  @override
+  ItemOutOfStockState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    return const ItemOutOfStockState();
+  }
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
-  int get selectedMainTabIndex => _selectedMainTabIndex;
-  int get selectedViewTabIndex => _selectedViewTabIndex;
-  String get selectedRestaurant => _selectedRestaurant;
-  String get selectedCategory => _selectedCategory;
-  String get itemName => _itemName;
-  String get selectedBrand => _selectedBrand;
-  String get selectedOffDuration => _selectedOffDuration;
-  bool get showRestaurantsWithAllItemsInStock =>
-      _showRestaurantsWithAllItemsInStock;
-
-  /// List of available outlets
-  List<String> get availableOutlets => [
-    'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
-  ];
-
-  /// List of available restaurants
-  List<String> get restaurants => [
-    'All',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
-  ];
-
-  /// List of available categories
-  List<String> get categories => [
-    'All',
-    'Beverages',
-    'Snacks',
-    'Main Course',
-    'Desserts',
-  ];
-
-  /// List of available brands
-  List<String> get brands => ['All', 'Brand A', 'Brand B', 'Brand C'];
-
-  /// List of offline duration options
-  List<String> get offDurationOptions => [
-    'Select',
-    '30 minutes',
-    '1 hour',
-    '2 hours',
-    '4 hours',
-    '8 hours',
-    '24 hours',
-  ];
-
-  // Setters
   void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+    state = state.copyWith(selectedOutlet: outlet);
   }
 
   void setSelectedMainTabIndex(int index) {
-    _selectedMainTabIndex = index;
-    notifyListeners();
+    state = state.copyWith(selectedMainTabIndex: index);
   }
 
   void setSelectedViewTabIndex(int index) {
-    _selectedViewTabIndex = index;
-    notifyListeners();
+    state = state.copyWith(selectedViewTabIndex: index);
   }
 
   void setSelectedRestaurant(String restaurant) {
-    _selectedRestaurant = restaurant;
-    notifyListeners();
+    state = state.copyWith(selectedRestaurant: restaurant);
   }
 
   void setSelectedCategory(String category) {
-    _selectedCategory = category;
-    notifyListeners();
+    state = state.copyWith(selectedCategory: category);
   }
 
   void setItemName(String name) {
-    _itemName = name;
-    notifyListeners();
+    state = state.copyWith(itemName: name);
   }
 
   void setSelectedBrand(String brand) {
-    _selectedBrand = brand;
-    notifyListeners();
+    state = state.copyWith(selectedBrand: brand);
   }
 
   void setSelectedOffDuration(String duration) {
-    _selectedOffDuration = duration;
-    notifyListeners();
+    state = state.copyWith(selectedOffDuration: duration);
   }
 
   void toggleShowRestaurantsWithAllItemsInStock() {
-    _showRestaurantsWithAllItemsInStock = !_showRestaurantsWithAllItemsInStock;
-    notifyListeners();
+    state = state.copyWith(
+      showRestaurantsWithAllItemsInStock:
+          !state.showRestaurantsWithAllItemsInStock,
+    );
   }
 
-  /// Reset all filters
   void resetFilters() {
-    _selectedRestaurant = 'All';
-    _selectedCategory = 'All';
-    _itemName = '';
-    _selectedBrand = 'All';
-    _selectedOffDuration = 'Select';
-    _showRestaurantsWithAllItemsInStock = false;
-    notifyListeners();
+    state = state.copyWith(
+      selectedRestaurant: 'All',
+      selectedCategory: 'All',
+      itemName: '',
+      selectedBrand: 'All',
+      selectedOffDuration: 'Select',
+      showRestaurantsWithAllItemsInStock: false,
+    );
   }
 
-  /// Search with current filters
-  void search() {
-    // TODO: Implement actual search API call
-    notifyListeners();
+  Future<void> search() async {
+    state = state.copyWith(isLoading: true, error: null);
+    // TODO: Implement actual search API call via repository
+    state = state.copyWith(isLoading: false);
   }
 
-  /// Export data
-  void exportData() {
-    // TODO: Implement export functionality
+  Future<void> exportData() async {
+    // TODO: Implement export functionality via repository
   }
 
-  /// Refresh data
-  void refresh() {
-    // TODO: Implement refresh API call
-    notifyListeners();
+  Future<void> refresh() async {
+    state = state.copyWith(isLoading: true, error: null);
+    // TODO: Implement refresh API call via repository
+    state = state.copyWith(isLoading: false);
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

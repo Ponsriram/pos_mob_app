@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/repositories/order_repository.dart' as repo;
 import '../../viewmodel/online_orders_viewmodel.dart';
+import '../../model/online_order_model.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../../dashboard/view/widgets/platform_tab_bar.dart';
 import '../../../dashboard/view/widgets/orders_chart_section.dart';
@@ -8,50 +11,74 @@ import '../widgets/online_orders_filter_section.dart';
 import '../widgets/online_orders_data_table.dart';
 
 /// Online Orders Activity page
-class OnlineOrdersPage extends StatefulWidget {
+class OnlineOrdersPage extends ConsumerStatefulWidget {
   const OnlineOrdersPage({super.key});
 
   @override
-  State<OnlineOrdersPage> createState() => _OnlineOrdersPageState();
+  ConsumerState<OnlineOrdersPage> createState() => _OnlineOrdersPageState();
 }
 
-class _OnlineOrdersPageState extends State<OnlineOrdersPage> {
-  late final OnlineOrdersViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = OnlineOrdersViewModel();
-  }
-
+class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewModel = ref.watch(onlineOrdersViewModelProvider);
+    final viewModelNotifier = ref.read(onlineOrdersViewModelProvider.notifier);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'online_orders',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'online_orders',
+      selectedOutlet: viewModel.selectedOutlet,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 
   Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final viewModel = ref.watch(onlineOrdersViewModelProvider);
+    final viewModelNotifier = ref.read(onlineOrdersViewModelProvider.notifier);
+
+    // Convert stores to RestaurantModel for widget compatibility
+    final restaurantModels = viewModel.stores
+        .map((store) => RestaurantModel(id: store.id, name: store.name))
+        .toList();
+
+    // Find selected restaurant model
+    final selectedRestaurantModel = viewModel.selectedStoreId != null
+        ? restaurantModels
+              .where((r) => r.id == viewModel.selectedStoreId)
+              .firstOrNull
+        : null;
+
+    // Convert orders to OnlineOrderModel for widget compatibility
+    final onlineOrders = viewModel.orders
+        .map(
+          (order) => OnlineOrderModel(
+            orderNo: order.orderNumber,
+            outletName:
+                viewModel.stores
+                    .where((s) => s.id == order.storeId)
+                    .firstOrNull
+                    ?.name ??
+                'Unknown',
+            orderFrom: order.platform.name,
+            orderType: order.platform.name,
+            customerName: order.customerName ?? 'Guest',
+            dateTime: order.createdAt,
+            total: order.totalAmount,
+            status: _mapOrderStatus(order.status),
+          ),
+        )
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,40 +97,47 @@ class _OnlineOrdersPageState extends State<OnlineOrdersPage> {
                   _buildSectionHeader(colorScheme, textTheme),
                   // Platform tabs
                   PlatformTabBar(
-                    platforms: _viewModel.platforms,
-                    selectedPlatformId: _viewModel.selectedPlatformId,
-                    onPlatformChanged: _viewModel.setSelectedPlatform,
+                    platforms: viewModel.platforms,
+                    selectedPlatformId: viewModel.selectedPlatformId,
+                    onPlatformChanged: viewModelNotifier.setSelectedPlatform,
                   ),
                   // Chart section
                   OrdersChartSection(
-                    isExpanded: _viewModel.isChartExpanded,
-                    onToggle: _viewModel.toggleChartExpansion,
+                    isExpanded: viewModel.isChartExpanded,
+                    onToggle: viewModelNotifier.toggleChartExpansion,
                   ),
                   // Filters section
                   OnlineOrdersFilterSection(
-                    restaurants: _viewModel.restaurants,
-                    selectedRestaurant: _viewModel.selectedRestaurant,
-                    selectedRecordType: _viewModel.selectedRecordType,
-                    selectedStatus: _viewModel.selectedStatus,
-                    orderNoFilter: _viewModel.orderNoFilter,
-                    startDate: _viewModel.startDate,
-                    endDate: _viewModel.endDate,
-                    showDateRange: _viewModel.showDateRange,
-                    onRestaurantChanged: _viewModel.setSelectedRestaurant,
-                    onRecordTypeChanged: _viewModel.setSelectedRecordType,
-                    onStatusChanged: _viewModel.setSelectedStatus,
-                    onOrderNoChanged: _viewModel.setOrderNoFilter,
-                    onStartDateChanged: _viewModel.setStartDate,
-                    onEndDateChanged: _viewModel.setEndDate,
-                    onApply: _viewModel.applyFilters,
-                    onShowAll: _viewModel.showAll,
+                    restaurants: restaurantModels,
+                    selectedRestaurant: selectedRestaurantModel,
+                    selectedRecordType: viewModel.selectedRecordType,
+                    selectedStatus: viewModel.selectedStatus,
+                    orderNoFilter: viewModel.orderNoFilter,
+                    startDate: viewModel.startDate,
+                    endDate: viewModel.endDate,
+                    showDateRange: viewModel.showDateRange,
+                    onRestaurantChanged: (restaurant) {
+                      if (restaurant != null) {
+                        viewModelNotifier.setSelectedRestaurant(
+                          restaurant.name,
+                        );
+                      }
+                    },
+                    onRecordTypeChanged:
+                        viewModelNotifier.setSelectedRecordType,
+                    onStatusChanged: viewModelNotifier.setSelectedStatus,
+                    onOrderNoChanged: viewModelNotifier.setOrderNoFilter,
+                    onStartDateChanged: viewModelNotifier.setStartDate,
+                    onEndDateChanged: viewModelNotifier.setEndDate,
+                    onApply: viewModelNotifier.applyFilters,
+                    onShowAll: viewModelNotifier.showAll,
                   ),
                   // Data table header
                   const OnlineOrdersTableHeader(),
                   // Data table content
                   OnlineOrdersDataTable(
-                    orders: _viewModel.orders,
-                    isLoading: _viewModel.isLoading,
+                    orders: onlineOrders,
+                    isLoading: viewModel.isLoading,
                   ),
                 ],
               ),
@@ -176,5 +210,25 @@ class _OnlineOrdersPageState extends State<OnlineOrdersPage> {
         ],
       ),
     );
+  }
+
+  /// Maps repository OrderStatus to UI OrderStatus
+  OrderStatus _mapOrderStatus(repo.OrderStatus status) {
+    switch (status) {
+      case repo.OrderStatus.pending:
+        return OrderStatus.waitingForAcceptance;
+      case repo.OrderStatus.confirmed:
+        return OrderStatus.accepted;
+      case repo.OrderStatus.preparing:
+        return OrderStatus.preparingFoodKotCreated;
+      case repo.OrderStatus.ready:
+        return OrderStatus.foodIsReady;
+      case repo.OrderStatus.completed:
+        return OrderStatus.delivered;
+      case repo.OrderStatus.cancelled:
+        return OrderStatus.all;
+      case repo.OrderStatus.all:
+        return OrderStatus.all;
+    }
   }
 }

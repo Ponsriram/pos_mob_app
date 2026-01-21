@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/cloud_access_viewmodel.dart';
 
 /// Cloud Access page
-class CloudAccessPage extends StatefulWidget {
+class CloudAccessPage extends ConsumerStatefulWidget {
   const CloudAccessPage({super.key});
 
   @override
-  State<CloudAccessPage> createState() => _CloudAccessPageState();
+  ConsumerState<CloudAccessPage> createState() => _CloudAccessPageState();
 }
 
-class _CloudAccessPageState extends State<CloudAccessPage> {
-  late final CloudAccessViewModel _viewModel;
+class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = CloudAccessViewModel();
     _nameController = TextEditingController();
     _emailController = TextEditingController();
   }
@@ -33,20 +32,17 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewModel = ref.watch(cloudAccessViewModelProvider);
+    final viewModelNotifier = ref.read(cloudAccessViewModelProvider.notifier);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'cloud_access',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'cloud_access',
+      selectedOutlet: viewModel.selectedOutletName,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -194,21 +190,27 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
         ),
       ],
       onSelected: (value) {
+        final viewModelNotifier = ref.read(
+          cloudAccessViewModelProvider.notifier,
+        );
         if (value == 'active') {
-          _viewModel.setActiveStatus();
+          viewModelNotifier.setActiveStatus();
         } else if (value == 'inactive') {
-          _viewModel.setInactiveStatus();
+          viewModelNotifier.setInactiveStatus();
         }
       },
     );
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(cloudAccessViewModelProvider);
+    final viewModelNotifier = ref.read(cloudAccessViewModelProvider.notifier);
+
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: _viewModel.toggleSearchExpanded,
+          onTap: viewModelNotifier.toggleSearchExpanded,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -238,7 +240,7 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  _viewModel.isSearchExpanded
+                  viewModel.isSearchExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                   color: colorScheme.onSurfaceVariant,
@@ -248,13 +250,16 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (_viewModel.isSearchExpanded)
+        if (viewModel.isSearchExpanded)
           _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(cloudAccessViewModelProvider);
+    final viewModelNotifier = ref.read(cloudAccessViewModelProvider.notifier);
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -271,7 +276,7 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _nameController,
-            onChanged: _viewModel.setName,
+            onChanged: viewModelNotifier.setName,
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -308,7 +313,7 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _emailController,
-            onChanged: _viewModel.setEmail,
+            onChanged: viewModelNotifier.setEmail,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               hintText: '',
@@ -347,9 +352,9 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedType,
-            items: _viewModel.types,
-            onChanged: _viewModel.setSelectedType,
+            value: viewModel.selectedType,
+            items: viewModel.types,
+            onChanged: viewModelNotifier.setSelectedType,
           ),
           const SizedBox(height: 16),
           // Select Status dropdown
@@ -364,9 +369,9 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedStatus,
-            items: _viewModel.statuses,
-            onChanged: _viewModel.setSelectedStatus,
+            value: viewModel.selectedStatus,
+            items: viewModel.statuses,
+            onChanged: viewModelNotifier.setSelectedStatus,
           ),
           const SizedBox(height: 24),
           // Search and Show All buttons
@@ -374,7 +379,7 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  _viewModel.search();
+                  viewModelNotifier.search();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -400,7 +405,7 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
                 onPressed: () {
                   _nameController.clear();
                   _emailController.clear();
-                  _viewModel.showAll();
+                  viewModelNotifier.showAll();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -492,7 +497,9 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    if (_viewModel.isLoading) {
+    final viewModel = ref.watch(cloudAccessViewModelProvider);
+
+    if (viewModel.isLoading) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -501,7 +508,7 @@ class _CloudAccessPageState extends State<CloudAccessPage> {
       );
     }
 
-    if (_viewModel.users.isEmpty) {
+    if (viewModel.users.isEmpty) {
       return _buildEmptyState(colorScheme, textTheme);
     }
 

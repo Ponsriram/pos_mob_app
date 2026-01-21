@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/running_orders_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
@@ -7,57 +8,49 @@ import '../../../dashboard/view/widgets/order_summary_bottom_bar.dart';
 import '../widgets/running_orders_tab_bar.dart';
 
 /// Main page for displaying running orders
-class RunningOrdersPage extends StatefulWidget {
+class RunningOrdersPage extends ConsumerStatefulWidget {
   const RunningOrdersPage({super.key});
 
   @override
-  State<RunningOrdersPage> createState() => _RunningOrdersPageState();
+  ConsumerState<RunningOrdersPage> createState() => _RunningOrdersPageState();
 }
 
-class _RunningOrdersPageState extends State<RunningOrdersPage> {
-  late final RunningOrdersViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = RunningOrdersViewModel();
-  }
-
+class _RunningOrdersPageState extends ConsumerState<RunningOrdersPage> {
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'running_orders',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          body: _buildBody(),
-          bottomNavigationBar: OrderSummaryBottomBar(
-            totalOrders: _viewModel.selectedTabIndex == 0
-                ? _viewModel.totalOrderCount
-                : _viewModel.totalTableCount,
-            totalAmount: _viewModel.totalEstimatedAmount,
-            orderLabel: _viewModel.selectedTabIndex == 0
-                ? 'Total Running Orders'
-                : 'Total Running Tables',
-            amountLabel: 'Estimated Total',
-          ),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+    final state = ref.watch(runningOrdersViewModelProvider);
+
+    return CommonScaffold(
+      activeItemId: 'running_orders',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(runningOrdersViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      body: _buildBody(),
+      bottomNavigationBar: OrderSummaryBottomBar(
+        totalOrders: state.selectedTabIndex == 0
+            ? state.totalOrderCount
+            : state.totalTableCount,
+        totalAmount: state.totalEstimatedAmount,
+        orderLabel: state.selectedTabIndex == 0
+            ? 'Total Running Orders'
+            : 'Total Running Tables',
+        amountLabel: 'Estimated Total',
+      ),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 
   Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final state = ref.watch(runningOrdersViewModelProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,14 +60,16 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
         const SizedBox(height: 8),
         // Tab bar
         RunningOrdersTabBar(
-          selectedIndex: _viewModel.selectedTabIndex,
+          selectedIndex: state.selectedTabIndex,
           onTabChanged: (index) {
-            _viewModel.setSelectedTabIndex(index);
+            ref
+                .read(runningOrdersViewModelProvider.notifier)
+                .setSelectedTabIndex(index);
           },
         ),
         // Content based on selected tab
         Expanded(
-          child: _viewModel.selectedTabIndex == 0
+          child: state.selectedTabIndex == 0
               ? _buildRunningOrdersList()
               : _buildRunningTablesList(),
         ),
@@ -83,7 +78,8 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
   }
 
   Widget _buildHeader(ColorScheme colorScheme, TextTheme textTheme) {
-    final isOrdersTab = _viewModel.selectedTabIndex == 0;
+    final state = ref.watch(runningOrdersViewModelProvider);
+    final isOrdersTab = state.selectedTabIndex == 0;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -112,7 +108,7 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
           // Refresh button
           GestureDetector(
             onTap: () {
-              _viewModel.refreshOrders();
+              ref.read(runningOrdersViewModelProvider.notifier).refreshOrders();
             },
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -136,12 +132,14 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
   }
 
   Widget _buildRunningOrdersList() {
+    final state = ref.watch(runningOrdersViewModelProvider);
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _viewModel.orderCategories.length,
+      itemCount: state.orderCategories.length,
       itemBuilder: (context, index) {
         return OrderCategoryCard(
-          category: _viewModel.orderCategories[index],
+          category: state.orderCategories[index],
           onTap: () {
             // Handle category tap
           },
@@ -153,9 +151,10 @@ class _RunningOrdersPageState extends State<RunningOrdersPage> {
   Widget _buildRunningTablesList() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final state = ref.watch(runningOrdersViewModelProvider);
 
     // Show empty state when no tables
-    if (_viewModel.totalTableCount == 0) {
+    if (state.totalTableCount == 0) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/biller_group_viewmodel.dart';
 
 /// Biller Group Management page
-class BillerGroupPage extends StatefulWidget {
+class BillerGroupPage extends ConsumerStatefulWidget {
   const BillerGroupPage({super.key});
 
   @override
-  State<BillerGroupPage> createState() => _BillerGroupPageState();
+  ConsumerState<BillerGroupPage> createState() => _BillerGroupPageState();
 }
 
-class _BillerGroupPageState extends State<BillerGroupPage> {
-  late final BillerGroupViewModel _viewModel;
+class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
   late final TextEditingController _billerGroupNameController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = BillerGroupViewModel();
     _billerGroupNameController = TextEditingController();
   }
 
@@ -30,20 +29,17 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewModel = ref.watch(billerGroupViewModelProvider);
+    final viewModelNotifier = ref.read(billerGroupViewModelProvider.notifier);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'biller_group',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'biller_group',
+      selectedOutlet: viewModel.selectedOutletName,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -136,11 +132,14 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(billerGroupViewModelProvider);
+    final viewModelNotifier = ref.read(billerGroupViewModelProvider.notifier);
+
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: _viewModel.toggleSearchExpanded,
+          onTap: viewModelNotifier.toggleSearchExpanded,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -170,7 +169,7 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  _viewModel.isSearchExpanded
+                  viewModel.isSearchExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                   color: colorScheme.onSurfaceVariant,
@@ -180,13 +179,16 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (_viewModel.isSearchExpanded)
+        if (viewModel.isSearchExpanded)
           _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(billerGroupViewModelProvider);
+    final viewModelNotifier = ref.read(billerGroupViewModelProvider.notifier);
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -203,7 +205,7 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _billerGroupNameController,
-            onChanged: _viewModel.setBillerGroupName,
+            onChanged: viewModelNotifier.setBillerGroupName,
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -241,9 +243,9 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedUserType,
-            items: _viewModel.userTypes,
-            onChanged: _viewModel.setSelectedUserType,
+            value: viewModel.selectedUserType,
+            items: viewModel.userTypes,
+            onChanged: viewModelNotifier.setSelectedUserType,
           ),
           const SizedBox(height: 24),
           // Search and Show All buttons
@@ -251,7 +253,7 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  _viewModel.search();
+                  viewModelNotifier.search();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -276,7 +278,7 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
               OutlinedButton(
                 onPressed: () {
                   _billerGroupNameController.clear();
-                  _viewModel.showAll();
+                  viewModelNotifier.showAll();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -368,7 +370,9 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    if (_viewModel.isLoading) {
+    final viewModel = ref.watch(billerGroupViewModelProvider);
+
+    if (viewModel.isLoading) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -377,7 +381,7 @@ class _BillerGroupPageState extends State<BillerGroupPage> {
       );
     }
 
-    if (_viewModel.billerGroups.isEmpty) {
+    if (viewModel.billerGroups.isEmpty) {
       return _buildEmptyState(colorScheme, textTheme);
     }
 

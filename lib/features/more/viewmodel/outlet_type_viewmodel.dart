@@ -1,4 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
+
+part 'outlet_type_viewmodel.g.dart';
 
 /// Model class representing an outlet/restaurant
 class OutletModel {
@@ -17,27 +21,51 @@ class OutletModel {
   });
 }
 
-/// ViewModel for the Outlet Type screen
-class OutletTypeViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
-  List<OutletModel> _outlets = [];
-  final Map<String, String> _selectedOutletTypes = {};
+/// State for the Outlet Type screen
+class OutletTypeState {
+  final String? selectedStoreId;
+  final List<StoreModel> stores;
+  final List<OutletModel> outlets;
+  final Map<String, String> selectedOutletTypes;
+  final String? error;
 
-  OutletTypeViewModel() {
-    _loadOutlets();
+  const OutletTypeState({
+    this.selectedStoreId,
+    this.stores = const [],
+    this.outlets = const [],
+    this.selectedOutletTypes = const {},
+    this.error,
+  });
+
+  OutletTypeState copyWith({
+    String? selectedStoreId,
+    List<StoreModel>? stores,
+    List<OutletModel>? outlets,
+    Map<String, String>? selectedOutletTypes,
+    String? error,
+  }) {
+    return OutletTypeState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      stores: stores ?? this.stores,
+      outlets: outlets ?? this.outlets,
+      selectedOutletTypes: selectedOutletTypes ?? this.selectedOutletTypes,
+      error: error,
+    );
   }
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
-  List<OutletModel> get outlets => _outlets;
-  Map<String, String> get selectedOutletTypes => _selectedOutletTypes;
-
-  /// List of available outlets for picker
   List<String> get availableOutlets => [
     'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
+    ...stores.map((s) => s.name),
   ];
+
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+
+  /// Alias for selectedOutletName
+  String get selectedOutlet => selectedOutletName;
 
   /// List of available outlet types
   List<String> get outletTypes => [
@@ -47,9 +75,41 @@ class OutletTypeViewModel extends ChangeNotifier {
     'FOCO - Franchisee Owned Company Operated',
   ];
 
-  /// Load outlets data
+  /// Check if there are unsaved changes
+  bool get hasUnsavedChanges {
+    for (final outlet in outlets) {
+      if (selectedOutletTypes[outlet.id] != outlet.outletType) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// ViewModel for the Outlet Type screen using Riverpod
+@riverpod
+class OutletTypeViewModel extends _$OutletTypeViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  OutletTypeState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    _loadInitialData();
+    return const OutletTypeState();
+  }
+
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+
+    _loadOutlets();
+  }
+
   void _loadOutlets() {
-    _outlets = [
+    final outlets = [
       const OutletModel(
         id: '363317',
         name: 'Aarthi cake Magic',
@@ -67,42 +127,41 @@ class OutletTypeViewModel extends ChangeNotifier {
     ];
 
     // Initialize selected outlet types
-    for (final outlet in _outlets) {
-      _selectedOutletTypes[outlet.id] = outlet.outletType;
+    final selectedOutletTypes = <String, String>{};
+    for (final outlet in outlets) {
+      selectedOutletTypes[outlet.id] = outlet.outletType;
     }
-    notifyListeners();
+
+    state = state.copyWith(
+      outlets: outlets,
+      selectedOutletTypes: selectedOutletTypes,
+    );
   }
 
-  // Setters
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
+    }
   }
 
-  /// Update outlet type for a specific outlet
   void setOutletType(String outletId, String outletType) {
-    _selectedOutletTypes[outletId] = outletType;
-    notifyListeners();
+    final updatedTypes = Map<String, String>.from(state.selectedOutletTypes);
+    updatedTypes[outletId] = outletType;
+    state = state.copyWith(selectedOutletTypes: updatedTypes);
   }
 
-  /// Get the selected outlet type for an outlet
   String getSelectedOutletType(String outletId) {
-    return _selectedOutletTypes[outletId] ?? outletTypes.first;
+    return state.selectedOutletTypes[outletId] ?? state.outletTypes.first;
   }
 
-  /// Save changes
   void save() {
     // TODO: Implement save API call
-    notifyListeners();
   }
 
-  /// Check if there are unsaved changes
-  bool get hasUnsavedChanges {
-    for (final outlet in _outlets) {
-      if (_selectedOutletTypes[outlet.id] != outlet.outletType) {
-        return true;
-      }
-    }
-    return false;
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

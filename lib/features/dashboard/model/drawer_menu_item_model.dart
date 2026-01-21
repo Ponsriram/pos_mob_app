@@ -253,6 +253,12 @@ class DrawerMenuItemModel {
         title: 'Privacy Policy',
         icon: Icons.privacy_tip_outlined,
       ),
+      // Logout
+      const DrawerMenuItemModel(
+        id: 'logout',
+        title: 'Logout',
+        icon: Icons.logout_outlined,
+      ),
     ];
   }
 }

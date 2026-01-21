@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../model/dashboard_stats_model.dart';
+import 'package:pos_app/core/repositories/dashboard_repository.dart';
 import 'stat_card.dart';
 
 /// A grid widget displaying all dashboard statistics in a 2-column layout
@@ -103,6 +104,122 @@ class StatsGrid extends StatelessWidget {
       title: 'Discounts',
       amount: stats.discounts,
       infoText: '${stats.discountsPercent} Discounts given',
+    );
+  }
+}
+
+/// A grid widget displaying dashboard statistics using DashboardStats from repository
+class StatsGridNew extends StatelessWidget {
+  final DashboardStats stats;
+
+  const StatsGridNew({super.key, required this.stats});
+
+  String _formatCurrency(double value) {
+    return value.toStringAsFixed(2);
+  }
+
+  String _calcPercent(double part, double total) {
+    if (total == 0) return '0%';
+    return '${(part / total * 100).toStringAsFixed(1)}%';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          _buildRow(
+            _buildOnlineSalesCard(colorScheme),
+            _buildCashCollectedCard(colorScheme),
+          ),
+          const SizedBox(height: 12),
+          _buildRow(
+            _buildNetSalesCard(colorScheme),
+            _buildExpensesCard(colorScheme),
+          ),
+          const SizedBox(height: 12),
+          _buildRow(
+            _buildTaxesCard(colorScheme),
+            _buildDiscountsCard(colorScheme),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(Widget left, Widget right) {
+    return Row(
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 12),
+        Expanded(child: right),
+      ],
+    );
+  }
+
+  Widget _buildOnlineSalesCard(ColorScheme colorScheme) {
+    return StatCard(
+      icon: Icons.wifi_tethering,
+      iconBackgroundColor: colorScheme.primary,
+      title: 'Online Sales',
+      amount: _formatCurrency(stats.onlineSales),
+      infoText: '${_calcPercent(stats.onlineSales, stats.totalSales)} of sales',
+    );
+  }
+
+  Widget _buildCashCollectedCard(ColorScheme colorScheme) {
+    final cashSales = stats.totalSales - stats.onlineSales;
+    return StatCard(
+      icon: Icons.account_balance_wallet_outlined,
+      iconBackgroundColor: colorScheme.tertiary,
+      title: 'Cash Collected',
+      amount: _formatCurrency(cashSales),
+      infoText:
+          '${_calcPercent(cashSales, stats.totalSales)} of total sales (excluding online orders)',
+    );
+  }
+
+  Widget _buildNetSalesCard(ColorScheme colorScheme) {
+    return StatCard(
+      icon: Icons.bar_chart,
+      iconBackgroundColor: colorScheme.secondary,
+      title: 'Net Sales',
+      amount: _formatCurrency(stats.netSales),
+      infoText: 'Net sales',
+      showMoreButton: true,
+    );
+  }
+
+  Widget _buildExpensesCard(ColorScheme colorScheme) {
+    return StatCard(
+      icon: Icons.receipt_long_outlined,
+      iconBackgroundColor: colorScheme.primaryContainer,
+      title: 'Expenses',
+      amount: '0.00',
+      infoText: 'Expenses recorded',
+    );
+  }
+
+  Widget _buildTaxesCard(ColorScheme colorScheme) {
+    final taxes = stats.totalSales - stats.netSales;
+    return StatCard(
+      icon: Icons.receipt_outlined,
+      iconBackgroundColor: colorScheme.outline,
+      title: 'Taxes',
+      amount: _formatCurrency(taxes),
+      infoText: 'Taxes recorded',
+    );
+  }
+
+  Widget _buildDiscountsCard(ColorScheme colorScheme) {
+    return StatCard(
+      icon: Icons.local_offer_outlined,
+      iconBackgroundColor: colorScheme.error,
+      title: 'Discounts',
+      amount: '0.00',
+      infoText: '0% Discounts given',
     );
   }
 }

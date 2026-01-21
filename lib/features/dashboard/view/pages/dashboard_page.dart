@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_app/core/repositories/dashboard_repository.dart';
 import '../../../../core/widgets/bottom_nav_bar.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/dashboard_viewmodel.dart';
@@ -7,59 +9,77 @@ import '../widgets/stats_grid.dart';
 import '../widgets/total_sales_card.dart';
 
 /// Main dashboard page displaying sales statistics and outlet information
-class DashboardPage extends StatefulWidget {
+class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
-  State<DashboardPage> createState() => _DashboardPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(dashboardViewModelProvider);
+    final viewModel = ref.read(dashboardViewModelProvider.notifier);
 
-class _DashboardPageState extends State<DashboardPage> {
-  late final DashboardViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = DashboardViewModel();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'dashboard',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          body: _buildBody(),
-          bottomNavigationBar: _buildBottomNav(),
+    // Listen for errors to show snackbar
+    ref.listen(dashboardViewModelProvider, (prev, next) {
+      if (next.error != null &&
+          (prev?.error == null || prev?.error != next.error)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () => viewModel.clearError(),
+            ),
+          ),
         );
-      },
+      }
+    });
+
+    return CommonScaffold(
+      activeItemId: 'dashboard',
+      selectedOutlet: state.selectedOutletName,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: viewModel.setSelectedOutlet,
+      onLightBulbTap: () {},
+      body: _buildBody(context, ref, state, viewModel),
+      bottomNavigationBar: _buildBottomNav(state, viewModel),
     );
   }
 
-  Widget _buildBody() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 16),
-          _buildTotalSalesCard(),
-          const SizedBox(height: 16),
-          _buildStatsGrid(),
-          const SizedBox(height: 24),
-          _buildOutletStatistics(),
-          const SizedBox(height: 24),
-        ],
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    DashboardState state,
+    DashboardViewModel viewModel,
+  ) {
+    if (state.isLoading && state.stats == DashboardStats.empty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: viewModel.refresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context, state, viewModel),
+            const SizedBox(height: 16),
+            _buildTotalSalesCard(state),
+            const SizedBox(height: 16),
+            _buildStatsGrid(state),
+            const SizedBox(height: 24),
+            _buildOutletStatistics(state, viewModel),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(
+    BuildContext context,
+    DashboardState state,
+    DashboardViewModel viewModel,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Padding(
@@ -74,17 +94,21 @@ class _DashboardPageState extends State<DashboardPage> {
               color: colorScheme.onSurface,
             ),
           ),
-          _buildDateSelector(),
+          _buildDateSelector(context, state, viewModel),
         ],
       ),
     );
   }
 
-  Widget _buildDateSelector() {
+  Widget _buildDateSelector(
+    BuildContext context,
+    DashboardState state,
+    DashboardViewModel viewModel,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
-      onTap: _showDatePicker,
+      onTap: () => _showDatePicker(context, state, viewModel),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
@@ -96,7 +120,7 @@ class _DashboardPageState extends State<DashboardPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _viewModel.formattedDate,
+              state.formattedDate,
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurface,
                 fontWeight: FontWeight.w500,
@@ -114,44 +138,51 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildTotalSalesCard() {
-    final stats = _viewModel.stats;
+  Widget _buildTotalSalesCard(DashboardState state) {
+    final stats = state.stats;
     return TotalSalesCard(
-      totalSales: stats.totalSales,
-      totalOutlets: stats.totalOutlets,
+      totalSales: stats.totalSales.toStringAsFixed(2),
+      totalOutlets: state.stores.length,
       totalOrders: stats.totalOrders,
       onChartTap: () {},
       onMoreTap: () {},
     );
   }
 
-  Widget _buildStatsGrid() {
-    return StatsGrid(stats: _viewModel.stats);
+  Widget _buildStatsGrid(DashboardState state) {
+    return StatsGridNew(stats: state.stats);
   }
 
-  Widget _buildOutletStatistics() {
-    return OutletStatisticsSection(
-      tabLabels: _viewModel.statsTabLabels,
-      activeTabIndex: _viewModel.activeStatsTab,
-      outlets: _viewModel.outletStats,
-      columnHeader: _viewModel.activeTabColumnHeader,
-      valueGetter: _viewModel.getOutletValue,
-      onTabChanged: (index) => _viewModel.setActiveStatsTab(index),
+  Widget _buildOutletStatistics(
+    DashboardState state,
+    DashboardViewModel viewModel,
+  ) {
+    return OutletStatisticsSectionNew(
+      tabLabels: state.statsTabLabels,
+      activeTabIndex: state.activeStatsTab,
+      outlets: state.outletStats,
+      columnHeader: state.activeTabColumnHeader,
+      valueGetter: viewModel.getOutletValue,
+      onTabChanged: (index) => viewModel.setActiveStatsTab(index),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(DashboardState state, DashboardViewModel viewModel) {
     return BottomNavBar(
-      currentIndex: _viewModel.currentNavIndex,
-      onTap: (index) => _viewModel.setCurrentNavIndex(index),
+      currentIndex: state.currentNavIndex,
+      onTap: (index) => viewModel.setCurrentNavIndex(index),
     );
   }
 
-  void _showDatePicker() async {
+  void _showDatePicker(
+    BuildContext context,
+    DashboardState state,
+    DashboardViewModel viewModel,
+  ) async {
     final colorScheme = Theme.of(context).colorScheme;
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _viewModel.selectedDate,
+      initialDate: state.selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       builder: (context, child) {
@@ -169,7 +200,7 @@ class _DashboardPageState extends State<DashboardPage> {
       },
     );
     if (picked != null) {
-      _viewModel.setSelectedDate(picked);
+      viewModel.setSelectedDate(picked);
     }
   }
 }

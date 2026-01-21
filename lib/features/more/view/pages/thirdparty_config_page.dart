@@ -1,202 +1,194 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/thirdparty_config_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 
-class ThirdPartyConfigPage extends StatefulWidget {
+class ThirdPartyConfigPage extends ConsumerStatefulWidget {
   const ThirdPartyConfigPage({super.key});
 
   @override
-  State<ThirdPartyConfigPage> createState() => _ThirdPartyConfigPageState();
+  ConsumerState<ThirdPartyConfigPage> createState() =>
+      _ThirdPartyConfigPageState();
 }
 
-class _ThirdPartyConfigPageState extends State<ThirdPartyConfigPage> {
-  late final ThirdPartyConfigViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = ThirdPartyConfigViewModel();
-  }
-
+class _ThirdPartyConfigPageState extends ConsumerState<ThirdPartyConfigPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final state = ref.watch(thirdPartyConfigViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'thirdparty_config',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and back button
-              _buildHeader(context, colorScheme, textTheme),
-              // Main content
-              Expanded(
-                child: Container(
-                  color: colorScheme.surfaceContainerLowest,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F7FA),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
+    return CommonScaffold(
+      activeItemId: 'thirdparty_config',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(thirdPartyConfigViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and back button
+          _buildHeader(context, colorScheme, textTheme),
+          // Main content
+          Expanded(
+            child: Container(
+              color: colorScheme.surfaceContainerLowest,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F7FA),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE3F2FD),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.lightbulb_outline,
-                                        color: Color(0xFF2196F3),
-                                        size: 28,
-                                      ),
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE3F2FD),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.lightbulb_outline,
+                                    color: Color(0xFF2196F3),
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Manage Third-Party Configurations',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
                                     ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Text(
-                                        'Manage Third-Party Configurations',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                _buildFeatureItem(
-                                  'You can easily',
-                                  'manage all third-party configurations',
-                                  'associated with a specific owner email address. This allows you to:',
-                                ),
-                                const SizedBox(height: 16),
-                                _buildFeatureItem(
-                                  'View all third-parties',
-                                  '',
-                                  'linked to that email in one centralized place.',
-                                ),
-                                const SizedBox(height: 16),
-                                _buildFeatureItem(
-                                  'Apply bulk changes',
-                                  '',
-                                  'to the third-party settings for all restaurants under that owner\'s email ID.',
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
+                            const SizedBox(height: 20),
+                            _buildFeatureItem(
+                              'You can easily',
+                              'manage all third-party configurations',
+                              'associated with a specific owner email address. This allows you to:',
+                            ),
+                            const SizedBox(height: 16),
+                            _buildFeatureItem(
+                              'View all third-parties',
+                              '',
+                              'linked to that email in one centralized place.',
+                            ),
+                            const SizedBox(height: 16),
+                            _buildFeatureItem(
+                              'Apply bulk changes',
+                              '',
+                              'to the third-party settings for all restaurants under that owner\'s email ID.',
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 40),
-                        // Illustration section
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Column(
-                            children: [
-                              // Puzzle illustration - 4 pieces connecting at center
-                              Center(
-                                child: SizedBox(
-                                  width: 120,
-                                  height: 120,
-                                  child: Stack(
-                                    children: [
-                                      // Top-left piece
-                                      Positioned(
-                                        left: 0,
-                                        top: 0,
-                                        child: _buildPuzzlePiece(
-                                          const Color(0xFF424242),
-                                          hasRightKnob: true,
-                                          hasBottomKnob: true,
-                                        ),
-                                      ),
-                                      // Top-right piece
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        child: _buildPuzzlePiece(
-                                          const Color(0xFFE0E0E0),
-                                          hasLeftSocket: true,
-                                          hasBottomKnob: true,
-                                        ),
-                                      ),
-                                      // Bottom-left piece
-                                      Positioned(
-                                        left: 0,
-                                        bottom: 0,
-                                        child: _buildPuzzlePiece(
-                                          const Color(0xFF616161),
-                                          hasTopSocket: true,
-                                          hasRightKnob: true,
-                                        ),
-                                      ),
-                                      // Bottom-right piece
-                                      Positioned(
-                                        right: 0,
-                                        bottom: 0,
-                                        child: _buildPuzzlePiece(
-                                          const Color(0xFF9E9E9E),
-                                          hasLeftSocket: true,
-                                          hasTopSocket: true,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                              // Description text
-                              const Text(
-                                'Integrating With Multiple Online Order Integrators And Manage Them Seamlessly. That\'s How 95% Of The Petpooja Users Optimise On Their Operations Related Efforts.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 40),
+                    // Illustration section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Column(
+                        children: [
+                          // Puzzle illustration - 4 pieces connecting at center
+                          Center(
+                            child: SizedBox(
+                              width: 120,
+                              height: 120,
+                              child: Stack(
+                                children: [
+                                  // Top-left piece
+                                  Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    child: _buildPuzzlePiece(
+                                      const Color(0xFF424242),
+                                      hasRightKnob: true,
+                                      hasBottomKnob: true,
+                                    ),
+                                  ),
+                                  // Top-right piece
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: _buildPuzzlePiece(
+                                      const Color(0xFFE0E0E0),
+                                      hasLeftSocket: true,
+                                      hasBottomKnob: true,
+                                    ),
+                                  ),
+                                  // Bottom-left piece
+                                  Positioned(
+                                    left: 0,
+                                    bottom: 0,
+                                    child: _buildPuzzlePiece(
+                                      const Color(0xFF616161),
+                                      hasTopSocket: true,
+                                      hasRightKnob: true,
+                                    ),
+                                  ),
+                                  // Bottom-right piece
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: _buildPuzzlePiece(
+                                      const Color(0xFF9E9E9E),
+                                      hasLeftSocket: true,
+                                      hasTopSocket: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          // Description text
+                          const Text(
+                            'Integrating With Multiple Online Order Integrators And Manage Them Seamlessly. That\'s How 95% Of The Petpooja Users Optimise On Their Operations Related Efforts.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+        ],
+      ),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 

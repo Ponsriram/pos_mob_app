@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/item_out_of_stock_viewmodel.dart';
 
 /// Item Out-Of-Stock Tracking page
-class ItemOutOfStockPage extends StatefulWidget {
+class ItemOutOfStockPage extends ConsumerStatefulWidget {
   const ItemOutOfStockPage({super.key});
 
   @override
-  State<ItemOutOfStockPage> createState() => _ItemOutOfStockPageState();
+  ConsumerState<ItemOutOfStockPage> createState() => _ItemOutOfStockPageState();
 }
 
-class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
-  late final ItemOutOfStockViewModel _viewModel;
+class _ItemOutOfStockPageState extends ConsumerState<ItemOutOfStockPage> {
   late final TextEditingController _itemNameController;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ItemOutOfStockViewModel();
     _itemNameController = TextEditingController();
   }
 
@@ -30,20 +29,19 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewModel = ref.watch(itemOutOfStockViewModelProvider);
+    final viewModelNotifier = ref.read(
+      itemOutOfStockViewModelProvider.notifier,
+    );
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'item_out_of_stock',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'item_out_of_stock',
+      selectedOutlet: viewModel.selectedOutlet,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -136,7 +134,7 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
           // Refresh icon
           GestureDetector(
             onTap: () {
-              _viewModel.refresh();
+              ref.read(itemOutOfStockViewModelProvider.notifier).refresh();
             },
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -187,6 +185,11 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
   }
 
   Widget _buildMainTabs(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(itemOutOfStockViewModelProvider);
+    final viewModelNotifier = ref.read(
+      itemOutOfStockViewModelProvider.notifier,
+    );
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -201,18 +204,18 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
         children: [
           _buildMainTab(
             label: 'Items',
-            isSelected: _viewModel.selectedMainTabIndex == 0,
+            isSelected: viewModel.selectedMainTabIndex == 0,
             colorScheme: colorScheme,
             textTheme: textTheme,
-            onTap: () => _viewModel.setSelectedMainTabIndex(0),
+            onTap: () => viewModelNotifier.setSelectedMainTabIndex(0),
           ),
           const SizedBox(width: 24),
           _buildMainTab(
             label: 'Addons',
-            isSelected: _viewModel.selectedMainTabIndex == 1,
+            isSelected: viewModel.selectedMainTabIndex == 1,
             colorScheme: colorScheme,
             textTheme: textTheme,
-            onTap: () => _viewModel.setSelectedMainTabIndex(1),
+            onTap: () => viewModelNotifier.setSelectedMainTabIndex(1),
           ),
         ],
       ),
@@ -252,6 +255,11 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
   }
 
   Widget _buildFiltersSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(itemOutOfStockViewModelProvider);
+    final viewModelNotifier = ref.read(
+      itemOutOfStockViewModelProvider.notifier,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -260,15 +268,15 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
           // Choose restaurant
           _buildFilterDropdown(
             label: 'Choose restaurant',
-            value: _viewModel.selectedRestaurant,
+            value: viewModel.selectedRestaurant,
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
               _showDropdownDialog(
                 title: 'Choose restaurant',
-                options: _viewModel.restaurants,
-                currentValue: _viewModel.selectedRestaurant,
-                onSelected: _viewModel.setSelectedRestaurant,
+                options: viewModel.restaurants,
+                currentValue: viewModel.selectedRestaurant,
+                onSelected: viewModelNotifier.setSelectedRestaurant,
               );
             },
           ),
@@ -276,15 +284,15 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
           // Category Name
           _buildFilterDropdown(
             label: 'Category Name',
-            value: _viewModel.selectedCategory,
+            value: viewModel.selectedCategory,
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
               _showDropdownDialog(
                 title: 'Category Name',
-                options: _viewModel.categories,
-                currentValue: _viewModel.selectedCategory,
-                onSelected: _viewModel.setSelectedCategory,
+                options: viewModel.categories,
+                currentValue: viewModel.selectedCategory,
+                onSelected: viewModelNotifier.setSelectedCategory,
               );
             },
           ),
@@ -295,21 +303,21 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
             controller: _itemNameController,
             colorScheme: colorScheme,
             textTheme: textTheme,
-            onChanged: _viewModel.setItemName,
+            onChanged: viewModelNotifier.setItemName,
           ),
           const SizedBox(height: 16),
           // Brand Name
           _buildFilterDropdown(
             label: 'Brand Name',
-            value: _viewModel.selectedBrand,
+            value: viewModel.selectedBrand,
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
               _showDropdownDialog(
                 title: 'Brand Name',
-                options: _viewModel.brands,
-                currentValue: _viewModel.selectedBrand,
-                onSelected: _viewModel.setSelectedBrand,
+                options: viewModel.brands,
+                currentValue: viewModel.selectedBrand,
+                onSelected: viewModelNotifier.setSelectedBrand,
               );
             },
           ),
@@ -317,15 +325,15 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
           // Item(s) Off for more than
           _buildFilterDropdown(
             label: 'Item(s) Off for more than',
-            value: _viewModel.selectedOffDuration,
+            value: viewModel.selectedOffDuration,
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
               _showDropdownDialog(
                 title: 'Item(s) Off for more than',
-                options: _viewModel.offDurationOptions,
-                currentValue: _viewModel.selectedOffDuration,
-                onSelected: _viewModel.setSelectedOffDuration,
+                options: viewModel.offDurationOptions,
+                currentValue: viewModel.selectedOffDuration,
+                onSelected: viewModelNotifier.setSelectedOffDuration,
               );
             },
           ),
@@ -336,7 +344,7 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
               // Search button
               ElevatedButton(
                 onPressed: () {
-                  _viewModel.search();
+                  viewModelNotifier.search();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -361,7 +369,7 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
               // Reset button
               OutlinedButton(
                 onPressed: () {
-                  _viewModel.resetFilters();
+                  viewModelNotifier.resetFilters();
                   _itemNameController.clear();
                 },
                 style: OutlinedButton.styleFrom(
@@ -388,7 +396,7 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
               // Export button
               OutlinedButton(
                 onPressed: () {
-                  _viewModel.exportData();
+                  viewModelNotifier.exportData();
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colorScheme.primary,
@@ -525,6 +533,11 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
+    final viewModel = ref.watch(itemOutOfStockViewModelProvider);
+    final viewModelNotifier = ref.read(
+      itemOutOfStockViewModelProvider.notifier,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -546,7 +559,8 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    _viewModel.toggleShowRestaurantsWithAllItemsInStock();
+                    viewModelNotifier
+                        .toggleShowRestaurantsWithAllItemsInStock();
                   },
                   child: Row(
                     children: [
@@ -556,18 +570,18 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: _viewModel.showRestaurantsWithAllItemsInStock
+                            color: viewModel.showRestaurantsWithAllItemsInStock
                                 ? colorScheme.primary
                                 : colorScheme.outline.withValues(alpha: 0.5),
-                            width: _viewModel.showRestaurantsWithAllItemsInStock
+                            width: viewModel.showRestaurantsWithAllItemsInStock
                                 ? 2
                                 : 1,
                           ),
-                          color: _viewModel.showRestaurantsWithAllItemsInStock
+                          color: viewModel.showRestaurantsWithAllItemsInStock
                               ? colorScheme.primary
                               : Colors.transparent,
                         ),
-                        child: _viewModel.showRestaurantsWithAllItemsInStock
+                        child: viewModel.showRestaurantsWithAllItemsInStock
                             ? Icon(
                                 Icons.check,
                                 size: 14,
@@ -599,6 +613,11 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
   }
 
   Widget _buildViewToggle(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(itemOutOfStockViewModelProvider);
+    final viewModelNotifier = ref.read(
+      itemOutOfStockViewModelProvider.notifier,
+    );
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
@@ -609,17 +628,17 @@ class _ItemOutOfStockPageState extends State<ItemOutOfStockPage> {
         children: [
           _buildViewToggleItem(
             label: 'Restaurant Wise',
-            isSelected: _viewModel.selectedViewTabIndex == 0,
+            isSelected: viewModel.selectedViewTabIndex == 0,
             colorScheme: colorScheme,
             textTheme: textTheme,
-            onTap: () => _viewModel.setSelectedViewTabIndex(0),
+            onTap: () => viewModelNotifier.setSelectedViewTabIndex(0),
           ),
           _buildViewToggleItem(
             label: 'Item Wise',
-            isSelected: _viewModel.selectedViewTabIndex == 1,
+            isSelected: viewModel.selectedViewTabIndex == 1,
             colorScheme: colorScheme,
             textTheme: textTheme,
-            onTap: () => _viewModel.setSelectedViewTabIndex(1),
+            onTap: () => viewModelNotifier.setSelectedViewTabIndex(1),
           ),
         ],
       ),

@@ -1,43 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/user_info_viewmodel.dart';
 import '../widgets/edit_profile/edit_user_info_dialog.dart';
 import '../widgets/edit_profile/user_logs_dialog.dart';
 
 /// User Info page displaying user profile information
-class UserInfoPage extends StatefulWidget {
+class UserInfoPage extends ConsumerStatefulWidget {
   const UserInfoPage({super.key});
 
   @override
-  State<UserInfoPage> createState() => _UserInfoPageState();
+  ConsumerState<UserInfoPage> createState() => _UserInfoPageState();
 }
 
-class _UserInfoPageState extends State<UserInfoPage> {
-  late final UserInfoViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = UserInfoViewModel();
-  }
-
+class _UserInfoPageState extends ConsumerState<UserInfoPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final state = ref.watch(userInfoViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'user_info',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'user_info',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(userInfoViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -141,7 +132,8 @@ class _UserInfoPageState extends State<UserInfoPage> {
   }
 
   Widget _buildUserInfoSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final userInfo = _viewModel.userInfo;
+    final state = ref.watch(userInfoViewModelProvider);
+    final userInfo = state.userInfo;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +189,8 @@ class _UserInfoPageState extends State<UserInfoPage> {
   }
 
   Widget _build2FASection(ColorScheme colorScheme, TextTheme textTheme) {
-    final userInfo = _viewModel.userInfo;
+    final state = ref.watch(userInfoViewModelProvider);
+    final userInfo = state.userInfo;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -214,7 +207,8 @@ class _UserInfoPageState extends State<UserInfoPage> {
             scale: 0.9,
             child: Switch(
               value: userInfo.is2FAEnabled,
-              onChanged: (value) => _viewModel.toggle2FA(value),
+              onChanged: (value) =>
+                  ref.read(userInfoViewModelProvider.notifier).toggle2FA(value),
               activeTrackColor: colorScheme.primary,
               activeThumbColor: colorScheme.onPrimary,
             ),
@@ -314,25 +308,25 @@ class _UserInfoPageState extends State<UserInfoPage> {
   }
 
   void _showLogsDialog() {
-    showUserLogsDialog(
-      context: context,
-      logs: _viewModel.logs,
-      isLoading: false,
-    );
+    final state = ref.read(userInfoViewModelProvider);
+    showUserLogsDialog(context: context, logs: state.logs, isLoading: false);
   }
 
   void _showEditDialog() {
-    final userInfo = _viewModel.userInfo;
+    final state = ref.read(userInfoViewModelProvider);
+    final userInfo = state.userInfo;
 
     showEditUserInfoDialog(
       context: context,
       userInfo: userInfo,
       onSave: (name, email, mobileNumbers) {
-        _viewModel.updateUserInfo(
-          name: name,
-          email: email,
-          mobileNumbers: mobileNumbers,
-        );
+        ref
+            .read(userInfoViewModelProvider.notifier)
+            .updateUserInfo(
+              name: name,
+              email: email,
+              mobileNumbers: mobileNumbers,
+            );
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User info updated successfully')),
@@ -430,10 +424,12 @@ class _UserInfoPageState extends State<UserInfoPage> {
                   return;
                 }
 
-                _viewModel.changePassword(
-                  currentPasswordController.text,
-                  newPasswordController.text,
-                );
+                ref
+                    .read(userInfoViewModelProvider.notifier)
+                    .changePassword(
+                      currentPasswordController.text,
+                      newPasswordController.text,
+                    );
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(

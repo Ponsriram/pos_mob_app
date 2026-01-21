@@ -1,53 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../viewmodel/outlet_type_viewmodel.dart';
 
 /// Outlet Type page for managing restaurant outlet types
-class OutletTypePage extends StatefulWidget {
+class OutletTypePage extends ConsumerStatefulWidget {
   const OutletTypePage({super.key});
 
   @override
-  State<OutletTypePage> createState() => _OutletTypePageState();
+  ConsumerState<OutletTypePage> createState() => _OutletTypePageState();
 }
 
-class _OutletTypePageState extends State<OutletTypePage> {
-  late final OutletTypeViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = OutletTypeViewModel();
-  }
-
+class _OutletTypePageState extends ConsumerState<OutletTypePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final state = ref.watch(outletTypeViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'outlet_type',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'outlet_type',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(outletTypeViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 
   Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final state = ref.watch(outletTypeViewModelProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,10 +51,10 @@ class _OutletTypePageState extends State<OutletTypePage> {
         // Table content
         Expanded(
           child: ListView.builder(
-            itemCount: _viewModel.outlets.length + 1, // +1 for save button
+            itemCount: state.outlets.length + 1, // +1 for save button
             itemBuilder: (context, index) {
-              if (index < _viewModel.outlets.length) {
-                final outlet = _viewModel.outlets[index];
+              if (index < state.outlets.length) {
+                final outlet = state.outlets[index];
                 return _buildOutletRow(outlet, colorScheme, textTheme);
               } else {
                 // Save button at the end of list
@@ -259,7 +251,9 @@ class _OutletTypePageState extends State<OutletTypePage> {
                   children: [
                     Expanded(
                       child: Text(
-                        _viewModel.getSelectedOutletType(outlet.id),
+                        ref
+                            .read(outletTypeViewModelProvider.notifier)
+                            .getSelectedOutletType(outlet.id),
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurface,
                         ),
@@ -289,7 +283,7 @@ class _OutletTypePageState extends State<OutletTypePage> {
         children: [
           ElevatedButton(
             onPressed: () {
-              _viewModel.save();
+              ref.read(outletTypeViewModelProvider.notifier).save();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Changes saved successfully')),
               );
@@ -312,7 +306,8 @@ class _OutletTypePageState extends State<OutletTypePage> {
   void _showOutletTypeDialog(OutletModel outlet) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final currentSelection = _viewModel.getSelectedOutletType(outlet.id);
+    final notifier = ref.read(outletTypeViewModelProvider.notifier);
+    final currentSelection = notifier.getSelectedOutletType(outlet.id);
 
     showModalBottomSheet(
       context: context,
@@ -350,9 +345,14 @@ class _OutletTypePageState extends State<OutletTypePage> {
               Flexible(
                 child: ListView.builder(
                   shrinkWrap: true,
-                  itemCount: _viewModel.outletTypes.length,
+                  itemCount: ref
+                      .read(outletTypeViewModelProvider)
+                      .outletTypes
+                      .length,
                   itemBuilder: (context, index) {
-                    final type = _viewModel.outletTypes[index];
+                    final type = ref
+                        .read(outletTypeViewModelProvider)
+                        .outletTypes[index];
                     final isSelected = type == currentSelection;
                     return ListTile(
                       title: Text(
@@ -370,7 +370,7 @@ class _OutletTypePageState extends State<OutletTypePage> {
                           ? Icon(Icons.check, color: colorScheme.primary)
                           : null,
                       onTap: () {
-                        _viewModel.setOutletType(outlet.id, type);
+                        notifier.setOutletType(outlet.id, type);
                         Navigator.pop(context);
                       },
                     );

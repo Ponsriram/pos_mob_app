@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_app/features/auth/viewmodel/auth_viewmodel.dart';
 import '../../../dashboard/view/pages/dashboard_page.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
 
   @override
@@ -17,10 +19,37 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    final success = await ref
+        .read(authViewModelProvider.notifier)
+        .signInWithGoogle();
+    if (success && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
+    final authState = ref.watch(authViewModelProvider);
+
+    // Listen for errors to show snackbar
+    ref.listen(authViewModelProvider, (prev, next) {
+      if (next.error != null && prev?.error != next.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: colorScheme.error,
+          ),
+        );
+        ref.read(authViewModelProvider.notifier).clearError();
+      }
+    });
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: Column(
@@ -37,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
                     _buildLogo(),
                     const SizedBox(height: 40),
                     // Login Card
-                    _buildLoginCard(),
+                    _buildLoginCard(authState),
                   ],
                 ),
               ),
@@ -96,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildLoginCard() {
+  Widget _buildLoginCard(AuthState authState) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
@@ -207,23 +236,32 @@ class _LoginPageState extends State<LoginPage> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {
-                // Handle Google sign in
-              },
-              icon: Image.network(
-                'https://www.google.com/favicon.ico',
-                width: 20,
-                height: 20,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    Icons.g_mobiledata,
-                    size: 24,
-                    color: colorScheme.error,
-                  );
-                },
-              ),
+              onPressed: authState.isLoading ? null : _handleGoogleSignIn,
+              icon: authState.isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          colorScheme.primary,
+                        ),
+                      ),
+                    )
+                  : Image.network(
+                      'https://www.google.com/favicon.ico',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.g_mobiledata,
+                          size: 24,
+                          color: colorScheme.error,
+                        );
+                      },
+                    ),
               label: Text(
-                'Sign in with Google',
+                authState.isLoading ? 'Signing in...' : 'Sign in with Google',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

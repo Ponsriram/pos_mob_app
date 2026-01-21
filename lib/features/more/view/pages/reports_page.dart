@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/reports_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import 'sales_report_detail_page.dart';
 
-class ReportsPage extends StatefulWidget {
+class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
 
   @override
-  State<ReportsPage> createState() => _ReportsPageState();
+  ConsumerState<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends State<ReportsPage> {
-  late final ReportsViewModel _viewModel;
+class _ReportsPageState extends ConsumerState<ReportsPage> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _viewModel = ReportsViewModel();
     _searchController.addListener(() {
-      _viewModel.setSearchQuery(_searchController.text);
+      ref
+          .read(reportsViewModelProvider.notifier)
+          .setSearchQuery(_searchController.text);
     });
   }
 
@@ -34,53 +35,51 @@ class _ReportsPageState extends State<ReportsPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final state = ref.watch(reportsViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'reports',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and back button
-              _buildHeader(colorScheme, textTheme),
-              // Main content
-              Expanded(
-                child: Container(
-                  color: colorScheme.surfaceContainerLowest,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        // Search bar
-                        _buildSearchBar(colorScheme),
-                        const SizedBox(height: 24),
-                        // Favorite section
-                        _buildFavoriteSection(colorScheme, textTheme),
-                        const SizedBox(height: 24),
-                        // All Restaurant Reports
-                        _buildReportsSection(colorScheme, textTheme),
-                      ],
-                    ),
-                  ),
+    return CommonScaffold(
+      activeItemId: 'reports',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(reportsViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and back button
+          _buildHeader(colorScheme, textTheme),
+          // Main content
+          Expanded(
+            child: Container(
+              color: colorScheme.surfaceContainerLowest,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    // Search bar
+                    _buildSearchBar(colorScheme),
+                    const SizedBox(height: 24),
+                    // Favorite section
+                    _buildFavoriteSection(colorScheme, textTheme),
+                    const SizedBox(height: 24),
+                    // All Restaurant Reports
+                    _buildReportsSection(colorScheme, textTheme),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+        ],
+      ),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 
@@ -158,7 +157,8 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _buildFavoriteSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final favoriteReports = _viewModel.favoriteReports;
+    final state = ref.watch(reportsViewModelProvider);
+    final favoriteReports = state.favoriteReports;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -276,7 +276,8 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _buildReportsSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final groupedReports = _viewModel.groupedReports;
+    final state = ref.watch(reportsViewModelProvider);
+    final groupedReports = state.groupedReports;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -345,7 +346,9 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
               ),
               GestureDetector(
-                onTap: () => _viewModel.toggleFavorite(report.id),
+                onTap: () => ref
+                    .read(reportsViewModelProvider.notifier)
+                    .toggleFavorite(report.id),
                 child: Icon(
                   report.isFavorite ? Icons.star : Icons.star_border,
                   color: report.isFavorite

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../model/outlet_stats_model.dart';
+import 'package:pos_app/core/repositories/dashboard_repository.dart';
 
 /// Section displaying outlet-wise statistics with scrollable tabs
 class OutletStatisticsSection extends StatelessWidget {
@@ -201,6 +202,223 @@ class OutletStatisticsSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: outlet.isTotal ? FontWeight.w600 : FontWeight.normal,
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Section displaying outlet-wise statistics using OutletStats from repository
+class OutletStatisticsSectionNew extends StatelessWidget {
+  final List<String> tabLabels;
+  final int activeTabIndex;
+  final List<OutletStats> outlets;
+  final String columnHeader;
+  final String Function(OutletStats) valueGetter;
+  final ValueChanged<int>? onTabChanged;
+
+  const OutletStatisticsSectionNew({
+    super.key,
+    required this.tabLabels,
+    required this.activeTabIndex,
+    required this.outlets,
+    required this.columnHeader,
+    required this.valueGetter,
+    this.onTabChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          _buildTabs(context),
+          _buildTable(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(Icons.bar_chart, color: colorScheme.primary, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Outlet Wise Statistics',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabs(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          children: List.generate(
+            tabLabels.length,
+            (index) => _buildTab(context, tabLabels[index], index),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTab(BuildContext context, String label, int index) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isActive = index == activeTabIndex;
+
+    return GestureDetector(
+      onTap: () => onTabChanged?.call(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isActive ? colorScheme.primary : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: isActive
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTable(BuildContext context) {
+    if (outlets.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'No outlet data available',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        _buildTableHeader(context),
+        ...outlets.map((outlet) => _buildTableRow(context, outlet)),
+      ],
+    );
+  }
+
+  Widget _buildTableHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Spacer(),
+          Text(
+            columnHeader,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableRow(BuildContext context, OutletStats outlet) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: colorScheme.onSurfaceVariant,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    outlet.storeName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                      color: colorScheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.open_in_new, size: 14, color: colorScheme.outline),
+              ],
+            ),
+          ),
+          Text(
+            valueGetter(outlet),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
               color: colorScheme.onSurface,
             ),
           ),

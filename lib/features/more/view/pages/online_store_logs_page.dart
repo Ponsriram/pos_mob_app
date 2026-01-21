@@ -1,42 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/online_store_logs_viewmodel.dart';
 
 /// Online Store Logs page
-class OnlineStoreLogsPage extends StatefulWidget {
+class OnlineStoreLogsPage extends ConsumerStatefulWidget {
   const OnlineStoreLogsPage({super.key});
 
   @override
-  State<OnlineStoreLogsPage> createState() => _OnlineStoreLogsPageState();
+  ConsumerState<OnlineStoreLogsPage> createState() =>
+      _OnlineStoreLogsPageState();
 }
 
-class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
-  late final OnlineStoreLogsViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = OnlineStoreLogsViewModel();
-  }
-
+class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final state = ref.watch(onlineStoreLogsViewModelProvider);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'online_store_logs',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: _buildBody(),
-        );
-      },
+    return CommonScaffold(
+      activeItemId: 'online_store_logs',
+      selectedOutlet: state.selectedOutlet,
+      availableOutlets: state.availableOutlets,
+      onOutletSelected: ref
+          .read(onlineStoreLogsViewModelProvider.notifier)
+          .setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: _buildBody(),
     );
   }
 
@@ -141,11 +133,15 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final state = ref.watch(onlineStoreLogsViewModelProvider);
+
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: _viewModel.toggleSearchExpanded,
+          onTap: ref
+              .read(onlineStoreLogsViewModelProvider.notifier)
+              .toggleSearchExpanded,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -175,7 +171,7 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  _viewModel.isSearchExpanded
+                  state.isSearchExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                   color: colorScheme.onSurfaceVariant,
@@ -185,13 +181,15 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (_viewModel.isSearchExpanded)
-          _buildSearchForm(colorScheme, textTheme),
+        if (state.isSearchExpanded) _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
+    final state = ref.watch(onlineStoreLogsViewModelProvider);
+    final notifier = ref.read(onlineStoreLogsViewModelProvider.notifier);
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -220,8 +218,8 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: _viewModel.fromDate,
-            onDateSelected: _viewModel.setFromDate,
+            date: state.fromDate,
+            onDateSelected: notifier.setFromDate,
           ),
           const SizedBox(height: 16),
           // To Date
@@ -236,8 +234,8 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: _viewModel.toDate,
-            onDateSelected: _viewModel.setToDate,
+            date: state.toDate,
+            onDateSelected: notifier.setToDate,
           ),
           const SizedBox(height: 16),
           // Select Outlet
@@ -252,9 +250,9 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
           _buildDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: _viewModel.selectedOutletFilter,
-            items: _viewModel.outlets,
-            onChanged: _viewModel.setSelectedOutletFilter,
+            value: state.selectedOutletFilter,
+            items: state.outlets,
+            onChanged: notifier.setSelectedOutletFilter,
           ),
           const SizedBox(height: 24),
           // Search and Reset buttons
@@ -262,7 +260,7 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  _viewModel.search();
+                  notifier.search();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -286,7 +284,7 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
               const SizedBox(width: 12),
               OutlinedButton(
                 onPressed: () {
-                  _viewModel.reset();
+                  ref.read(onlineStoreLogsViewModelProvider.notifier).reset();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -317,6 +315,8 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
+    final state = ref.watch(onlineStoreLogsViewModelProvider);
+
     return InkWell(
       onTap: () => _showRestaurantSelector(colorScheme, textTheme),
       child: Container(
@@ -329,7 +329,7 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
           children: [
             Expanded(
               child: Text(
-                _viewModel.restaurantDisplayText,
+                state.restaurantDisplayText,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -355,6 +355,11 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final state = ref.watch(onlineStoreLogsViewModelProvider);
+            final notifier = ref.read(
+              onlineStoreLogsViewModelProvider.notifier,
+            );
+
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Column(
@@ -371,10 +376,10 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
                   const SizedBox(height: 16),
                   // All checkbox
                   CheckboxListTile(
-                    value: _viewModel.isAllRestaurantsSelected,
+                    value: state.isAllRestaurantsSelected,
                     onChanged: (value) {
                       setModalState(() {
-                        _viewModel.toggleAllRestaurants();
+                        notifier.toggleAllRestaurants();
                       });
                     },
                     title: Text(
@@ -388,28 +393,26 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
                   ),
                   const Divider(),
                   // Individual restaurant checkboxes
-                  ...(_viewModel.restaurants.where(
-                    (r) => r != 'Please Select',
-                  )).map((restaurant) {
-                    return CheckboxListTile(
-                      value: _viewModel.selectedRestaurants.contains(
-                        restaurant,
-                      ),
-                      onChanged: (value) {
-                        setModalState(() {
-                          _viewModel.toggleRestaurant(restaurant);
-                        });
-                      },
-                      title: Text(
-                        restaurant,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface,
+                  ...(state.restaurants.where((r) => r != 'Please Select')).map(
+                    (restaurant) {
+                      return CheckboxListTile(
+                        value: state.selectedRestaurants.contains(restaurant),
+                        onChanged: (value) {
+                          setModalState(() {
+                            notifier.toggleRestaurant(restaurant);
+                          });
+                        },
+                        title: Text(
+                          restaurant,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
                   // Done button
                   SizedBox(
@@ -533,7 +536,9 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    if (_viewModel.isLoading) {
+    final state = ref.watch(onlineStoreLogsViewModelProvider);
+
+    if (state.isLoading) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -542,7 +547,7 @@ class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
       );
     }
 
-    if (_viewModel.logs.isEmpty) {
+    if (state.logs.isEmpty) {
       return _buildEmptyState(colorScheme, textTheme);
     }
 

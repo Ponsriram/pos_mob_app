@@ -1,26 +1,78 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 
-/// ViewModel for the Third-Party Configuration screen
-class ThirdPartyConfigViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
+part 'thirdparty_config_viewmodel.g.dart';
 
-  ThirdPartyConfigViewModel();
+/// State for the Third-Party Configuration screen
+class ThirdPartyConfigState {
+  final String? selectedStoreId;
+  final List<StoreModel> stores;
+  final String? error;
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
+  const ThirdPartyConfigState({
+    this.selectedStoreId,
+    this.stores = const [],
+    this.error,
+  });
 
-  /// List of available outlets
+  ThirdPartyConfigState copyWith({
+    String? selectedStoreId,
+    List<StoreModel>? stores,
+    String? error,
+  }) {
+    return ThirdPartyConfigState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      stores: stores ?? this.stores,
+      error: error,
+    );
+  }
+
   List<String> get availableOutlets => [
     'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
+    ...stores.map((s) => s.name),
   ];
 
-  // Setters
-  void setSelectedOutlet(String outlet) {
-    if (_selectedOutlet != outlet) {
-      _selectedOutlet = outlet;
-      notifyListeners();
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+
+  /// Alias for selectedOutletName
+  String get selectedOutlet => selectedOutletName;
+}
+
+/// ViewModel for the Third-Party Configuration screen using Riverpod
+@riverpod
+class ThirdPartyConfigViewModel extends _$ThirdPartyConfigViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  ThirdPartyConfigState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    _loadInitialData();
+    return const ThirdPartyConfigState();
+  }
+
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
     }
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/franchise_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 
-class FranchiseManagementPage extends StatefulWidget {
+class FranchiseManagementPage extends ConsumerStatefulWidget {
   const FranchiseManagementPage({super.key});
 
   @override
-  State<FranchiseManagementPage> createState() =>
+  ConsumerState<FranchiseManagementPage> createState() =>
       _FranchiseManagementPageState();
 }
 
-class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
-  late final FranchiseViewModel _viewModel;
+class _FranchiseManagementPageState
+    extends ConsumerState<FranchiseManagementPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _refIdController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _viewModel = FranchiseViewModel();
   }
 
   @override
@@ -33,61 +33,58 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final viewModel = ref.watch(franchiseViewModelProvider);
+    final viewModelNotifier = ref.read(franchiseViewModelProvider.notifier);
 
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, child) {
-        return CommonScaffold(
-          activeItemId: 'franchise',
-          selectedOutlet: _viewModel.selectedOutlet,
-          availableOutlets: _viewModel.availableOutlets,
-          onOutletSelected: _viewModel.setSelectedOutlet,
-          onLightBulbTap: () {},
-          backgroundColor: colorScheme.surface,
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and back button
-              _buildHeader(colorScheme, textTheme),
-              // Main content
-              Expanded(
-                child: Container(
-                  color: colorScheme.surfaceContainerLowest,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Filter section
-                        _buildFilterSection(colorScheme, textTheme),
-                        const SizedBox(height: 24),
-                        // Data table
-                        _buildDataTable(colorScheme, textTheme),
-                        const SizedBox(height: 16),
-                        // Footer text
-                        Align(
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Showing 1 to ${_viewModel.filteredFranchises.length} of ${_viewModel.filteredFranchises.length} records',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
+    return CommonScaffold(
+      activeItemId: 'franchise',
+      selectedOutlet: viewModel.selectedOutletName,
+      availableOutlets: viewModel.availableOutlets,
+      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      onLightBulbTap: () {},
+      backgroundColor: colorScheme.surface,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and back button
+          _buildHeader(colorScheme, textTheme),
+          // Main content
+          Expanded(
+            child: Container(
+              color: colorScheme.surfaceContainerLowest,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Filter section
+                    _buildFilterSection(colorScheme, textTheme),
+                    const SizedBox(height: 24),
+                    // Data table
+                    _buildDataTable(colorScheme, textTheme),
+                    const SizedBox(height: 16),
+                    // Footer text
+                    Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Showing 1 to ${viewModel.filteredFranchises.length} of ${viewModel.filteredFranchises.length} records',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-          floatingActionButton: ChatSupportButton(
-            onTap: () {
-              // Handle chat support tap
-            },
-          ),
-        );
-      },
+        ],
+      ),
+      floatingActionButton: ChatSupportButton(
+        onTap: () {
+          // Handle chat support tap
+        },
+      ),
     );
   }
 
@@ -122,6 +119,8 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
   }
 
   Widget _buildFilterSection(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModelNotifier = ref.read(franchiseViewModelProvider.notifier);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,7 +135,7 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
         const SizedBox(height: 8),
         TextField(
           controller: _nameController,
-          onChanged: _viewModel.setNameFilter,
+          onChanged: viewModelNotifier.setNameFilter,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -168,7 +167,7 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
         const SizedBox(height: 8),
         TextField(
           controller: _refIdController,
-          onChanged: _viewModel.setRefIdFilter,
+          onChanged: viewModelNotifier.setRefIdFilter,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -195,7 +194,7 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
             SizedBox(
               width: 120,
               child: ElevatedButton(
-                onPressed: _viewModel.search,
+                onPressed: viewModelNotifier.search,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
@@ -214,7 +213,7 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
                 onPressed: () {
                   _nameController.clear();
                   _refIdController.clear();
-                  _viewModel.showAll();
+                  viewModelNotifier.showAll();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -236,6 +235,9 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
   }
 
   Widget _buildDataTable(ColorScheme colorScheme, TextTheme textTheme) {
+    final viewModel = ref.watch(franchiseViewModelProvider);
+    final viewModelNotifier = ref.read(franchiseViewModelProvider.notifier);
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
@@ -289,7 +291,7 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
             ),
           ),
           // Table rows
-          ..._viewModel.filteredFranchises.map((franchise) {
+          ...viewModel.filteredFranchises.map((franchise) {
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -322,7 +324,8 @@ class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: () => _viewModel.toggleLock(franchise.id),
+                      onPressed: () =>
+                          viewModelNotifier.toggleLock(franchise.id),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colorScheme.primary,
                         side: BorderSide(color: colorScheme.primary),

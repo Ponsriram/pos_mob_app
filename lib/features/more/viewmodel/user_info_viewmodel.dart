@@ -1,27 +1,29 @@
-import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 import '../model/user_info_model.dart';
 
-/// ViewModel for User Info page
-class UserInfoViewModel extends ChangeNotifier {
-  // Outlet management
-  String _selectedOutlet = 'All Outlets';
-  final List<String> _availableOutlets = [
-    'All Outlets',
-    'Outlet 1',
-    'Outlet 2',
-    'Outlet 3',
-  ];
+part 'user_info_viewmodel.g.dart';
 
-  String get selectedOutlet => _selectedOutlet;
-  List<String> get availableOutlets => _availableOutlets;
+/// State for User Info page
+class UserInfoState {
+  final String? selectedStoreId;
+  final List<StoreModel> stores;
+  final UserInfoModel userInfo;
+  final List<UserLogEntry> logs;
+  final bool isLoading;
+  final String? error;
 
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
-  }
+  UserInfoState({
+    this.selectedStoreId,
+    this.stores = const [],
+    UserInfoModel? userInfo,
+    this.logs = const [],
+    this.isLoading = false,
+    this.error,
+  }) : userInfo = userInfo ?? _defaultUserInfo;
 
-  // User info data - initialized directly with mock data
-  UserInfoModel _userInfo = UserInfoModel(
+  static final UserInfoModel _defaultUserInfo = UserInfoModel(
     id: '1',
     name: 'Balaji',
     email: 'aarthysweetsandbakery@gmail.com',
@@ -39,60 +41,115 @@ class UserInfoViewModel extends ChangeNotifier {
     createdBy: 'Parmy Doshi',
   );
 
-  UserInfoModel get userInfo => _userInfo;
+  UserInfoState copyWith({
+    String? selectedStoreId,
+    List<StoreModel>? stores,
+    UserInfoModel? userInfo,
+    List<UserLogEntry>? logs,
+    bool? isLoading,
+    String? error,
+  }) {
+    return UserInfoState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      stores: stores ?? this.stores,
+      userInfo: userInfo ?? this.userInfo,
+      logs: logs ?? this.logs,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
 
-  // Logs data - initialized directly with mock data
-  final List<UserLogEntry> _logs = [
-    UserLogEntry(
-      id: '1',
-      changes: 'Basic Details Updated\nPassword has been changed.',
-      doneByName: 'Balaji',
-      doneByEmail: 'aarthysweetsandbakery@gmail.com',
-      browser: 'Chrome',
-      ipAddress: '152.58.222.176',
-      timestamp: DateTime(2025, 1, 20, 12, 14, 17),
-    ),
-    UserLogEntry(
-      id: '2',
-      changes: 'User Created',
-      doneByName: 'Parmy Doshi',
-      doneByEmail: 'parmy.doshi@petpooja.com',
-      browser: 'Chrome',
-      ipAddress: '14.195.74.206',
-      timestamp: DateTime(2025, 1, 13, 14, 7, 20),
-    ),
+  List<String> get availableOutlets => [
+    'All Outlets',
+    ...stores.map((s) => s.name),
   ];
 
-  List<UserLogEntry> get logs => _logs;
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
 
-  /// Update user info
+  /// Alias for selectedOutletName
+  String get selectedOutlet => selectedOutletName;
+}
+
+/// ViewModel for User Info page using Riverpod
+@riverpod
+class UserInfoViewModel extends _$UserInfoViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  UserInfoState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+
+    _loadInitialData();
+
+    return UserInfoState(
+      logs: [
+        UserLogEntry(
+          id: '1',
+          changes: 'Basic Details Updated\nPassword has been changed.',
+          doneByName: 'Balaji',
+          doneByEmail: 'aarthysweetsandbakery@gmail.com',
+          browser: 'Chrome',
+          ipAddress: '152.58.222.176',
+          timestamp: DateTime(2025, 1, 20, 12, 14, 17),
+        ),
+        UserLogEntry(
+          id: '2',
+          changes: 'User Created',
+          doneByName: 'Parmy Doshi',
+          doneByEmail: 'parmy.doshi@petpooja.com',
+          browser: 'Chrome',
+          ipAddress: '14.195.74.206',
+          timestamp: DateTime(2025, 1, 13, 14, 7, 20),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
+    }
+  }
+
   bool updateUserInfo({
     required String name,
     required String email,
     required List<MobileNumber> mobileNumbers,
   }) {
-    _userInfo = _userInfo.copyWith(
+    final updatedUserInfo = state.userInfo.copyWith(
       name: name,
       email: email,
       mobileNumbers: mobileNumbers,
     );
-    notifyListeners();
+    state = state.copyWith(userInfo: updatedUserInfo);
     return true;
   }
 
-  /// Toggle 2FA
   void toggle2FA(bool enabled) {
-    _userInfo = _userInfo.copyWith(is2FAEnabled: enabled);
-    notifyListeners();
+    final updatedUserInfo = state.userInfo.copyWith(is2FAEnabled: enabled);
+    state = state.copyWith(userInfo: updatedUserInfo);
   }
 
-  /// Change password - returns success status
   bool changePassword(String currentPassword, String newPassword) {
     // In real implementation, call API to change password
     return true;
   }
 
-  /// Add a new mobile number
   bool addMobileNumber(String countryCode, String number) {
     final newNumber = MobileNumber(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -101,19 +158,26 @@ class UserInfoViewModel extends ChangeNotifier {
       isVerified: false,
     );
 
-    final updatedNumbers = [..._userInfo.mobileNumbers, newNumber];
-    _userInfo = _userInfo.copyWith(mobileNumbers: updatedNumbers);
-    notifyListeners();
+    final updatedNumbers = [...state.userInfo.mobileNumbers, newNumber];
+    final updatedUserInfo = state.userInfo.copyWith(
+      mobileNumbers: updatedNumbers,
+    );
+    state = state.copyWith(userInfo: updatedUserInfo);
     return true;
   }
 
-  /// Remove a mobile number
   bool removeMobileNumber(String numberId) {
-    final updatedNumbers = _userInfo.mobileNumbers
+    final updatedNumbers = state.userInfo.mobileNumbers
         .where((n) => n.id != numberId)
         .toList();
-    _userInfo = _userInfo.copyWith(mobileNumbers: updatedNumbers);
-    notifyListeners();
+    final updatedUserInfo = state.userInfo.copyWith(
+      mobileNumbers: updatedNumbers,
+    );
+    state = state.copyWith(userInfo: updatedUserInfo);
     return true;
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

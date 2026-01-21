@@ -43,3 +43,67 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated plugin files (auto-generated, don't commit)
+**/generated_plugin_registrant.*
+**/generated_plugins.cmake
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/Flutter-Release.xcconfig
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Configuration files with secrets (use .env instead)
+lib/core/config/supabase_config.dart
+lib/core/config/google_auth_config.dart
+
+# Firebase configuration (contains API keys)
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+lib/firebase_options.dart
+
+# Keystore and signing
+*.jks
+*.keystore
+key.properties
+android/key.properties
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+ios/firebase_app_id_file.json
+
+# Local configuration
+local.properties
+android/local.properties
+
+# IDE and editor specific
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
+# macOS specific
+*.xcuserstate
+*.xcworkspace
+xcuserdata/
+DerivedData/
+
+# Build outputs
+*.aab
+*.apk
+*.ipa
+*.app
+
+# Coverage and test reports
+coverage/
+test-results/
+*.lcov
+
+# Logs
+*.log
+logs/

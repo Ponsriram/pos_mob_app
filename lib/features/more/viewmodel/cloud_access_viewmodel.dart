@@ -1,123 +1,166 @@
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 
-/// ViewModel for Cloud Access page
-class CloudAccessViewModel extends ChangeNotifier {
-  // Outlet selection
-  String _selectedOutlet = 'All Outlets';
-  final List<String> _availableOutlets = [
+part 'cloud_access_viewmodel.g.dart';
+
+/// State for Cloud Access page
+class CloudAccessState {
+  final String? selectedStoreId;
+  final List<StoreModel> stores;
+  final bool isSearchExpanded;
+  final String name;
+  final String email;
+  final String selectedType;
+  final List<String> types;
+  final String selectedStatus;
+  final List<String> statuses;
+  final List<Map<String, dynamic>> users;
+  final bool isLoading;
+  final String? error;
+
+  const CloudAccessState({
+    this.selectedStoreId,
+    this.stores = const [],
+    this.isSearchExpanded = true,
+    this.name = '',
+    this.email = '',
+    this.selectedType = 'All',
+    this.types = const ['All', 'Franchise Owner', 'Restaurant User'],
+    this.selectedStatus = 'Active',
+    this.statuses = const ['All', 'Active', 'Inactive'],
+    this.users = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  CloudAccessState copyWith({
+    String? selectedStoreId,
+    List<StoreModel>? stores,
+    bool? isSearchExpanded,
+    String? name,
+    String? email,
+    String? selectedType,
+    List<String>? types,
+    String? selectedStatus,
+    List<String>? statuses,
+    List<Map<String, dynamic>>? users,
+    bool? isLoading,
+    String? error,
+  }) {
+    return CloudAccessState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      stores: stores ?? this.stores,
+      isSearchExpanded: isSearchExpanded ?? this.isSearchExpanded,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      selectedType: selectedType ?? this.selectedType,
+      types: types ?? this.types,
+      selectedStatus: selectedStatus ?? this.selectedStatus,
+      statuses: statuses ?? this.statuses,
+      users: users ?? this.users,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
+  }
+
+  List<String> get availableOutlets => [
     'All Outlets',
-    'Outlet 1',
-    'Outlet 2',
+    ...stores.map((s) => s.name),
   ];
 
-  String get selectedOutlet => _selectedOutlet;
-  List<String> get availableOutlets => _availableOutlets;
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+}
 
-  void setSelectedOutlet(String outlet) {
-    _selectedOutlet = outlet;
-    notifyListeners();
+/// ViewModel for Cloud Access page using Riverpod
+@riverpod
+class CloudAccessViewModel extends _$CloudAccessViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  CloudAccessState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+    _loadInitialData();
+    return const CloudAccessState();
   }
 
-  // Search section expansion
-  bool _isSearchExpanded = true;
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+  }
 
-  bool get isSearchExpanded => _isSearchExpanded;
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
+    }
+  }
 
   void toggleSearchExpanded() {
-    _isSearchExpanded = !_isSearchExpanded;
-    notifyListeners();
+    state = state.copyWith(isSearchExpanded: !state.isSearchExpanded);
   }
-
-  // Name filter
-  String _name = '';
-
-  String get name => _name;
 
   void setName(String value) {
-    _name = value;
-    notifyListeners();
+    state = state.copyWith(name: value);
   }
-
-  // Email filter
-  String _email = '';
-
-  String get email => _email;
 
   void setEmail(String value) {
-    _email = value;
-    notifyListeners();
+    state = state.copyWith(email: value);
   }
-
-  // Select Type filter
-  String _selectedType = 'All';
-  final List<String> _types = ['All', 'Franchise Owner', 'Restaurant User'];
-
-  String get selectedType => _selectedType;
-  List<String> get types => _types;
 
   void setSelectedType(String type) {
-    _selectedType = type;
-    notifyListeners();
+    state = state.copyWith(selectedType: type);
   }
-
-  // Select Status filter
-  String _selectedStatus = 'Active';
-  final List<String> _statuses = ['All', 'Active', 'Inactive'];
-
-  String get selectedStatus => _selectedStatus;
-  List<String> get statuses => _statuses;
 
   void setSelectedStatus(String status) {
-    _selectedStatus = status;
-    notifyListeners();
+    state = state.copyWith(selectedStatus: status);
   }
 
-  // Cloud access users list (empty for now - will be populated from API)
-  List<Map<String, dynamic>> _users = [];
-
-  List<Map<String, dynamic>> get users => _users;
-
-  // Loading state
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
-  // Search functionality
-  void search() {
-    _isLoading = true;
-    notifyListeners();
+  Future<void> search() async {
+    state = state.copyWith(isLoading: true, error: null);
 
     // TODO: Implement API call to search cloud access users
-    // For now, just simulate a search
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _users = []; // Results would come from API
-      _isLoading = false;
-      notifyListeners();
-    });
+    await Future.delayed(const Duration(milliseconds: 500));
+    state = state.copyWith(users: [], isLoading: false);
   }
 
   void showAll() {
-    _name = '';
-    _email = '';
-    _selectedType = 'All';
-    _selectedStatus = 'Active';
+    state = state.copyWith(
+      name: '',
+      email: '',
+      selectedType: 'All',
+      selectedStatus: 'Active',
+    );
     search();
   }
 
   void clearFilters() {
-    _name = '';
-    _email = '';
-    _selectedType = 'All';
-    _selectedStatus = 'Active';
-    notifyListeners();
+    state = state.copyWith(
+      name: '',
+      email: '',
+      selectedType: 'All',
+      selectedStatus: 'Active',
+    );
   }
 
-  // Action dropdown for bulk actions
   void setActiveStatus() {
     // TODO: Implement bulk set active
   }
 
   void setInactiveStatus() {
     // TODO: Implement bulk set inactive
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

@@ -1,45 +1,87 @@
 import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
+import 'package:pos_app/core/repositories/store_repository.dart';
 import '../model/sales_report_model.dart';
 
-/// ViewModel for the Sales Report Detail screen
-class SalesReportViewModel extends ChangeNotifier {
-  String _selectedOutlet = 'All Outlets';
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now();
-  OrderStatus _selectedOrderStatus = OrderStatus.success;
-  List<RestaurantFilter> _restaurants = [];
-  List<RestaurantSalesData> _salesData = [];
-  SalesReportSummary? _summary;
-  bool _isLoading = false;
-  List<ColumnOption> _columns = [];
+part 'sales_report_viewmodel.g.dart';
 
-  SalesReportViewModel() {
-    _restaurants = RestaurantFilter.getDefaultRestaurants();
-    _columns = ColumnOption.getDefaultColumns();
-    _loadSampleData();
+/// State for the Sales Report Detail screen
+class SalesReportState {
+  final String? selectedStoreId;
+  final DateTime startDate;
+  final DateTime endDate;
+  final OrderStatus selectedOrderStatus;
+  final List<RestaurantFilter> restaurants;
+  final List<RestaurantSalesData> salesData;
+  final SalesReportSummary? summary;
+  final bool isLoading;
+  final List<ColumnOption> columns;
+  final List<StoreModel> stores;
+  final String? error;
+
+  SalesReportState({
+    this.selectedStoreId,
+    DateTime? startDate,
+    DateTime? endDate,
+    this.selectedOrderStatus = OrderStatus.success,
+    this.restaurants = const [],
+    this.salesData = const [],
+    this.summary,
+    this.isLoading = false,
+    this.columns = const [],
+    this.stores = const [],
+    this.error,
+  }) : startDate = startDate ?? DateTime.now(),
+       endDate = endDate ?? DateTime.now();
+
+  SalesReportState copyWith({
+    String? selectedStoreId,
+    DateTime? startDate,
+    DateTime? endDate,
+    OrderStatus? selectedOrderStatus,
+    List<RestaurantFilter>? restaurants,
+    List<RestaurantSalesData>? salesData,
+    SalesReportSummary? summary,
+    bool? isLoading,
+    List<ColumnOption>? columns,
+    List<StoreModel>? stores,
+    String? error,
+  }) {
+    return SalesReportState(
+      selectedStoreId: selectedStoreId ?? this.selectedStoreId,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      selectedOrderStatus: selectedOrderStatus ?? this.selectedOrderStatus,
+      restaurants: restaurants ?? this.restaurants,
+      salesData: salesData ?? this.salesData,
+      summary: summary ?? this.summary,
+      isLoading: isLoading ?? this.isLoading,
+      columns: columns ?? this.columns,
+      stores: stores ?? this.stores,
+      error: error,
+    );
   }
 
-  // Getters
-  String get selectedOutlet => _selectedOutlet;
-  DateTime get startDate => _startDate;
-  DateTime get endDate => _endDate;
-  OrderStatus get selectedOrderStatus => _selectedOrderStatus;
-  List<RestaurantFilter> get restaurants => _restaurants;
-  List<RestaurantSalesData> get salesData => _salesData;
-  SalesReportSummary? get summary => _summary;
-  bool get isLoading => _isLoading;
-  List<ColumnOption> get columns => _columns;
-
-  /// List of available outlets
+  /// List of available outlets including "All Outlets"
   List<String> get availableOutlets => [
     'All Outlets',
-    'Aarthi cake Magic',
-    'Ambattur Aarthi sweets and bakery',
+    ...stores.map((s) => s.name),
   ];
 
-  /// Get selected restaurant names
+  /// Get selected outlet name
+  String get selectedOutletName {
+    if (selectedStoreId == null) return 'All Outlets';
+    final store = stores.where((s) => s.id == selectedStoreId).firstOrNull;
+    return store?.name ?? 'All Outlets';
+  }
+
+  /// Alias for selectedOutletName
+  String get selectedOutlet => selectedOutletName;
+
+  /// Get selected restaurant names text
   String get selectedRestaurantsText {
-    final selected = _restaurants.where((r) => r.isSelected).toList();
+    final selected = restaurants.where((r) => r.isSelected).toList();
     if (selected.isEmpty) {
       return 'Choose Restaurant';
     } else if (selected.length == 1) {
@@ -48,64 +90,88 @@ class SalesReportViewModel extends ChangeNotifier {
       return '${selected.length} restaurants selected';
     }
   }
+}
 
-  // Setters
-  void setSelectedOutlet(String outlet) {
-    if (_selectedOutlet != outlet) {
-      _selectedOutlet = outlet;
-      notifyListeners();
+/// ViewModel for the Sales Report Detail screen using Riverpod
+@riverpod
+class SalesReportViewModel extends _$SalesReportViewModel {
+  late StoreRepository _storeRepo;
+
+  @override
+  SalesReportState build() {
+    _storeRepo = ref.watch(storeRepositoryProvider);
+
+    _loadInitialData();
+
+    return SalesReportState(
+      restaurants: RestaurantFilter.getDefaultRestaurants(),
+      columns: ColumnOption.getDefaultColumns(),
+    );
+  }
+
+  Future<void> _loadInitialData() async {
+    final storesResult = await _storeRepo.getAccessibleStores();
+    storesResult.fold(
+      (failure) => state = state.copyWith(error: failure.message),
+      (stores) => state = state.copyWith(stores: stores),
+    );
+
+    _loadSampleData();
+  }
+
+  void setSelectedOutlet(String outletName) {
+    if (outletName == 'All Outlets') {
+      state = state.copyWith(selectedStoreId: null);
+    } else {
+      final store = state.stores.where((s) => s.name == outletName).firstOrNull;
+      state = state.copyWith(selectedStoreId: store?.id);
     }
   }
 
   void setStartDate(DateTime date) {
-    _startDate = date;
-    notifyListeners();
+    state = state.copyWith(startDate: date);
   }
 
   void setEndDate(DateTime date) {
-    _endDate = date;
-    notifyListeners();
+    state = state.copyWith(endDate: date);
   }
 
   void setOrderStatus(OrderStatus status) {
-    _selectedOrderStatus = status;
-    notifyListeners();
+    state = state.copyWith(selectedOrderStatus: status);
   }
 
   void toggleRestaurant(String restaurantId) {
-    final index = _restaurants.indexWhere((r) => r.id == restaurantId);
-    if (index != -1) {
-      _restaurants[index] = _restaurants[index].copyWith(
-        isSelected: !_restaurants[index].isSelected,
-      );
-      notifyListeners();
-    }
+    final updatedRestaurants = state.restaurants.map((r) {
+      if (r.id == restaurantId) {
+        return r.copyWith(isSelected: !r.isSelected);
+      }
+      return r;
+    }).toList();
+    state = state.copyWith(restaurants: updatedRestaurants);
   }
 
   void toggleColumn(String columnId) {
-    final index = _columns.indexWhere((c) => c.id == columnId);
-    if (index != -1) {
-      _columns[index] = _columns[index].copyWith(
-        isVisible: !_columns[index].isVisible,
-      );
-      notifyListeners();
-    }
+    final updatedColumns = state.columns.map((c) {
+      if (c.id == columnId) {
+        return c.copyWith(isVisible: !c.isVisible);
+      }
+      return c;
+    }).toList();
+    state = state.copyWith(columns: updatedColumns);
   }
 
   Future<void> search() async {
-    _isLoading = true;
-    notifyListeners();
+    state = state.copyWith(isLoading: true, error: null);
 
     // Simulate API call
     await Future.delayed(const Duration(milliseconds: 500));
 
     _loadSampleData();
-    _isLoading = false;
-    notifyListeners();
+    state = state.copyWith(isLoading: false);
   }
 
   void _loadSampleData() {
-    _salesData = [
+    final salesData = [
       const RestaurantSalesData(
         restaurantName: 'Aarthi cake Magic',
         invoiceNumbers: '211-212',
@@ -162,7 +228,7 @@ class SalesReportViewModel extends ChangeNotifier {
       ),
     ];
 
-    _summary = const SalesReportSummary(
+    const summary = SalesReportSummary(
       total: 86,
       min: 2,
       max: 84,
@@ -189,6 +255,8 @@ class SalesReportViewModel extends ChangeNotifier {
       online: 0.00,
       pax: 0,
     );
+
+    state = state.copyWith(salesData: salesData, summary: summary);
   }
 
   void exportToExcel() {
@@ -199,5 +267,9 @@ class SalesReportViewModel extends ChangeNotifier {
   void printReport() {
     // TODO: Implement print functionality
     debugPrint('Printing report...');
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }

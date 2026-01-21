@@ -19,6 +19,7 @@ import '../../features/more/view/pages/reports_page.dart';
 import '../../features/more/view/pages/running_orders_page.dart';
 import '../../features/more/view/pages/store_status_tracking_page.dart';
 import '../../features/more/view/pages/thirdparty_config_page.dart';
+import '../../features/more/view/pages/user_info_page.dart';
 
 /// Centralized route names for the entire app
 class AppRoutes {
@@ -46,6 +47,8 @@ class AppRoutes {
   static const String franchiseManagement = 'franchise_management';
   static const String deleteOutlet = 'delete_outlet';
   static const String createZone = 'create_zone';
+  static const String userInfo = 'user_info';
+  static const String editProfile = 'edit_profile';
 
   /// Map of route names to their corresponding page widgets
   /// This makes navigation scalable - just add entries here for new pages
@@ -70,6 +73,8 @@ class AppRoutes {
     franchiseManagement: (_) => const FranchiseManagementPage(),
     deleteOutlet: (_) => const DeleteOutletPage(),
     createZone: (_) => const CreateZonePage(),
+    userInfo: (_) => const UserInfoPage(),
+    editProfile: (_) => const UserInfoPage(),
   };
 
   /// Check if a route exists

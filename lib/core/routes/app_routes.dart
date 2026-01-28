@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_app/features/more/view/pages/franchise_management_page.dart';
+import '../../features/ai_agent/view/pages/ai_chat_page.dart';
 import '../../features/dashboard/view/pages/dashboard_page.dart';
 import '../../features/dashboard/view/pages/notification_page.dart';
 import '../../features/more/view/pages/admin_group_page.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const String createZone = 'create_zone';
   static const String userInfo = 'user_info';
   static const String editProfile = 'edit_profile';
+  static const String aiAssistant = 'ai_assistant';
 
   /// Map of route names to their corresponding page widgets
   /// This makes navigation scalable - just add entries here for new pages
@@ -75,6 +77,7 @@ class AppRoutes {
     createZone: (_) => const CreateZonePage(),
     userInfo: (_) => const UserInfoPage(),
     editProfile: (_) => const UserInfoPage(),
+    aiAssistant: (_) => const AiChatPage(),
   };
 
   /// Check if a route exists

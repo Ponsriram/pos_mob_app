@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/core/repositories/dashboard_repository.dart';
+import 'package:pos_app/features/ai_agent/view/pages/ai_chat_page.dart';
 import '../../../../core/widgets/bottom_nav_bar.dart';
 import '../../../../core/widgets/common_scaffold.dart';
 import '../../viewmodel/dashboard_viewmodel.dart';
@@ -39,9 +40,23 @@ class DashboardPage extends ConsumerWidget {
       availableOutlets: state.availableOutlets,
       onOutletSelected: viewModel.setSelectedOutlet,
       onLightBulbTap: () {},
-      body: _buildBody(context, ref, state, viewModel),
+      body: _buildBodyContent(context, ref, state, viewModel),
       bottomNavigationBar: _buildBottomNav(state, viewModel),
     );
+  }
+
+  Widget _buildBodyContent(
+    BuildContext context,
+    WidgetRef ref,
+    DashboardState state,
+    DashboardViewModel viewModel,
+  ) {
+    // Show AI Chat if index is 1, otherwise show dashboard
+    if (state.currentNavIndex == 1) {
+      return const AiChatPage();
+    }
+
+    return _buildBody(context, ref, state, viewModel);
   }
 
   Widget _buildBody(

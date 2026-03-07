@@ -599,15 +599,13 @@ class _SalesReportDetailPageState extends ConsumerState<SalesReportDetailPage> {
 
     String getBillsCount() {
       if (label == 'Total') return summary.total.toString();
-      if (label == 'Min.') return summary.min.toString();
-      if (label == 'Max.') return summary.max.toString();
-      return summary.avg.toString();
+      return '0';
     }
 
     final cellData = [
       ('invoice_nos', '', 120.0, false),
       ('total_bills', getBillsCount(), 120.0, false),
-      ('my_amount', summary.myAmount.toStringAsFixed(2), 120.0, false),
+      ('my_amount', '0.00', 120.0, false),
       (
         'total_discount',
         summary.totalDiscount.toStringAsFixed(2),
@@ -615,59 +613,24 @@ class _SalesReportDetailPageState extends ConsumerState<SalesReportDetailPage> {
         false,
       ),
       ('net_sales', summary.netSales.toStringAsFixed(2), 120.0, false),
-      (
-        'delivery_charge',
-        summary.deliveryCharge.toStringAsFixed(2),
-        120.0,
-        false,
-      ),
-      (
-        'container_charge',
-        summary.containerCharge.toStringAsFixed(2),
-        120.0,
-        false,
-      ),
-      (
-        'service_charge',
-        summary.serviceCharge.toStringAsFixed(2),
-        120.0,
-        false,
-      ),
-      (
-        'additional_charge',
-        summary.additionalCharge.toStringAsFixed(2),
-        120.0,
-        false,
-      ),
+      ('delivery_charge', '0.00', 120.0, false),
+      ('container_charge', '0.00', 120.0, false),
+      ('service_charge', '0.00', 120.0, false),
+      ('additional_charge', '0.00', 120.0, false),
       ('total_tax', summary.totalTax.toStringAsFixed(2), 120.0, false),
-      ('round_off', summary.roundOff.toStringAsFixed(2), 100.0, false),
-      ('waived_off', summary.waivedOff.toStringAsFixed(2), 100.0, false),
+      ('round_off', '0.00', 100.0, false),
+      ('waived_off', '0.00', 100.0, false),
       ('total_sales', summary.totalSales.toStringAsFixed(2), 120.0, false),
-      (
-        'online_tax',
-        summary.onlineTaxCalculated.toStringAsFixed(2),
-        150.0,
-        false,
-      ),
-      (
-        'gst_merchant',
-        summary.gstPaidByMerchant.toStringAsFixed(2),
-        150.0,
-        false,
-      ),
-      (
-        'gst_ecommerce',
-        summary.gstPaidByEcommerce.toStringAsFixed(2),
-        160.0,
-        false,
-      ),
+      ('online_tax', '0.00', 150.0, false),
+      ('gst_merchant', '0.00', 150.0, false),
+      ('gst_ecommerce', '0.00', 160.0, false),
       ('cash', summary.cash.toStringAsFixed(2), 100.0, false),
       ('card', summary.card.toStringAsFixed(2), 100.0, false),
-      ('due_payment', summary.duePayment.toStringAsFixed(2), 120.0, false),
-      ('other', summary.other.toStringAsFixed(2), 100.0, false),
-      ('wallet', summary.wallet.toStringAsFixed(2), 100.0, false),
+      ('due_payment', '0.00', 120.0, false),
+      ('other', '0.00', 100.0, false),
+      ('wallet', '0.00', 100.0, false),
       ('online', summary.online.toStringAsFixed(2), 100.0, false),
-      ('pax', summary.pax.toString(), 80.0, false),
+      ('pax', '0', 80.0, false),
       ('data_synced', '', 150.0, false),
     ];
 
@@ -690,30 +653,30 @@ class _SalesReportDetailPageState extends ConsumerState<SalesReportDetailPage> {
     final cells = <Widget>[];
 
     final cellData = [
-      ('invoice_nos', data.invoiceNumbers, 120.0),
+      ('invoice_nos', '-', 120.0),
       ('total_bills', data.totalBills.toString(), 120.0),
-      ('my_amount', data.myAmount.toStringAsFixed(2), 120.0),
+      ('my_amount', '0.00', 120.0),
       ('total_discount', data.totalDiscount.toStringAsFixed(0), 120.0),
       ('net_sales', data.netSales.toStringAsFixed(2), 120.0),
-      ('delivery_charge', data.deliveryCharge.toStringAsFixed(0), 120.0),
-      ('container_charge', data.containerCharge.toStringAsFixed(0), 120.0),
-      ('service_charge', data.serviceCharge.toStringAsFixed(0), 120.0),
-      ('additional_charge', data.additionalCharge.toStringAsFixed(0), 120.0),
+      ('delivery_charge', '0', 120.0),
+      ('container_charge', '0', 120.0),
+      ('service_charge', '0', 120.0),
+      ('additional_charge', '0', 120.0),
       ('total_tax', data.totalTax.toStringAsFixed(2), 120.0),
-      ('round_off', data.roundOff.toStringAsFixed(2), 100.0),
-      ('waived_off', data.waivedOff.toStringAsFixed(0), 100.0),
+      ('round_off', '0.00', 100.0),
+      ('waived_off', '0', 100.0),
       ('total_sales', data.totalSales.toStringAsFixed(0), 120.0),
-      ('online_tax', data.onlineTaxCalculated.toStringAsFixed(0), 150.0),
-      ('gst_merchant', data.gstPaidByMerchant.toStringAsFixed(0), 150.0),
-      ('gst_ecommerce', data.gstPaidByEcommerce.toStringAsFixed(0), 160.0),
+      ('online_tax', '0', 150.0),
+      ('gst_merchant', '0', 150.0),
+      ('gst_ecommerce', '0', 160.0),
       ('cash', data.cash.toStringAsFixed(0), 100.0),
       ('card', data.card.toStringAsFixed(0), 100.0),
-      ('due_payment', data.duePayment.toStringAsFixed(0), 120.0),
-      ('other', data.other.toStringAsFixed(0), 100.0),
-      ('wallet', data.wallet.toStringAsFixed(0), 100.0),
+      ('due_payment', '0', 120.0),
+      ('other', '0', 100.0),
+      ('wallet', '0', 100.0),
       ('online', data.online.toStringAsFixed(0), 100.0),
-      ('pax', data.pax.toString(), 80.0),
-      ('data_synced', data.dataSynced ?? '', 150.0),
+      ('pax', '0', 80.0),
+      ('data_synced', '', 150.0),
     ];
 
     for (final (id, value, width) in cellData) {

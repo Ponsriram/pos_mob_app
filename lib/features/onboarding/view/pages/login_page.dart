@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/features/auth/viewmodel/auth_viewmodel.dart';
-import 'package:pos_app/features/auth/view/widgets/otp_bottom_sheet.dart';
 import '../../../dashboard/view/pages/dashboard_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -13,75 +12,39 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isRegisterMode = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
-  /// Check if input is a phone number (starts with + or contains only digits)
-  bool _isPhoneNumber(String input) {
-    final trimmed = input.trim();
-    // Phone number should start with + or be all digits
-    if (trimmed.startsWith('+')) {
-      return RegExp(r'^\+[0-9]{10,15}$').hasMatch(trimmed);
-    }
-    // If it's just digits (10+ digits), treat as phone
-    return RegExp(r'^[0-9]{10,15}$').hasMatch(trimmed);
-  }
-
-  /// Format phone number with country code if needed
-  String _formatPhoneNumber(String input) {
-    final trimmed = input.trim();
-    if (trimmed.startsWith('+')) {
-      return trimmed;
-    }
-    // Default to India country code if not provided
-    return '+91$trimmed';
-  }
-
-  Future<void> _handleContinue() async {
+  Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final input = _emailController.text.trim();
-    final isPhone = _isPhoneNumber(input);
-    final destination = isPhone ? _formatPhoneNumber(input) : input;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final notifier = ref.read(authViewModelProvider.notifier);
 
     bool success;
-    if (isPhone) {
-      success = await ref
-          .read(authViewModelProvider.notifier)
-          .sendPhoneOtp(phone: destination);
-    } else {
-      success = await ref
-          .read(authViewModelProvider.notifier)
-          .sendEmailOtp(email: destination);
-    }
-
-    if (success && mounted) {
-      // Show OTP bottom sheet
-      final verified = await showOtpBottomSheet(
-        context: context,
-        ref: ref,
-        destination: destination,
-        isPhone: isPhone,
+    if (_isRegisterMode) {
+      final name = _nameController.text.trim();
+      success = await notifier.signUp(
+        email: email,
+        password: password,
+        name: name,
       );
-
-      if (verified && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
-        );
-      }
+    } else {
+      success = await notifier.signIn(email: email, password: password);
     }
-  }
 
-  Future<void> _handleGoogleSignIn() async {
-    final success = await ref
-        .read(authViewModelProvider.notifier)
-        .signInWithGoogle();
     if (success && mounted) {
       Navigator.pushReplacement(
         context,
@@ -121,17 +84,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
-                    // Logo
                     _buildLogo(),
                     const SizedBox(height: 40),
-                    // Login Card
                     _buildLoginCard(authState),
                   ],
                 ),
               ),
             ),
           ),
-          // Footer
           _buildFooter(),
         ],
       ),
@@ -207,7 +167,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sign In',
+              _isRegisterMode ? 'Create Account' : 'Sign In',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -216,34 +176,69 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'to access Account',
+              _isRegisterMode ? 'Register a new account' : 'to access Account',
               style: TextStyle(
                 fontSize: 14,
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
-            // Email/Mobile Input
+            // Name Input (register mode only)
+            if (_isRegisterMode) ...[
+              TextFormField(
+                controller: _nameController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your name';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: 'Full name',
+                  hintStyle: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: colorScheme.primary),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: colorScheme.error),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            // Email Input
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Please enter email or mobile number';
+                  return 'Please enter your email';
                 }
-                final trimmed = value.trim();
-                // Check if it's a valid email
                 final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                // Check if it's a valid phone (10-15 digits, optionally with +)
-                final phoneRegex = RegExp(r'^(\+)?[0-9]{10,15}$');
-                if (!emailRegex.hasMatch(trimmed) &&
-                    !phoneRegex.hasMatch(trimmed)) {
-                  return 'Please enter a valid email or mobile number';
+                if (!emailRegex.hasMatch(value.trim())) {
+                  return 'Please enter a valid email';
                 }
                 return null;
               },
               decoration: InputDecoration(
-                hintText: 'Email address or mobile number',
+                hintText: 'Email address',
                 hintStyle: TextStyle(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 14,
@@ -271,11 +266,64 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // Continue Button
+            // Password Input
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your password';
+                }
+                if (_isRegisterMode && value.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+                return null;
+              },
+              decoration: InputDecoration(
+                hintText: 'Password',
+                hintStyle: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.primary),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.error),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Submit Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: authState.isLoading ? null : _handleContinue,
+                onPressed: authState.isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
@@ -296,9 +344,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                       )
-                    : const Text(
-                        'Continue',
-                        style: TextStyle(
+                    : Text(
+                        _isRegisterMode ? 'Register' : 'Sign In',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -306,66 +354,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Or Divider
-            Row(
-              children: [
-                Expanded(child: Divider(color: colorScheme.outline)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'or',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(child: Divider(color: colorScheme.outline)),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Sign in with Google Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: authState.isLoading ? null : _handleGoogleSignIn,
-                icon: Image.network(
-                  'https://www.google.com/favicon.ico',
-                  width: 20,
-                  height: 20,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.g_mobiledata,
-                      size: 24,
-                      color: colorScheme.error,
-                    );
-                  },
-                ),
-                label: Text(
-                  'Sign in with Google',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // New in Pos? Contact Us
+            // Toggle register/login
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'New in POS? ',
+                    _isRegisterMode
+                        ? 'Already have an account? '
+                        : 'New in POS? ',
                     style: TextStyle(
                       fontSize: 14,
                       color: colorScheme.onSurfaceVariant,
@@ -373,14 +370,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Handle contact us
+                      setState(() {
+                        _isRegisterMode = !_isRegisterMode;
+                      });
                     },
                     child: Text(
-                      'Contact Us',
+                      _isRegisterMode ? 'Sign In' : 'Register',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),

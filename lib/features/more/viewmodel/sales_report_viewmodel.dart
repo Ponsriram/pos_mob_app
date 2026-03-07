@@ -125,13 +125,18 @@ class SalesReportViewModel extends _$SalesReportViewModel {
   }
 
   Future<void> _loadSalesReport() async {
+    final storeId = state.selectedStoreId;
+    if (storeId == null) {
+      state = state.copyWith(error: 'Please select a store');
+      return;
+    }
+    final storeName = state.selectedOutletName;
+
     final result = await _salesReportRepo.getSalesReport(
       startDate: state.startDate,
       endDate: state.endDate,
-      storeId: state.selectedStoreId,
-      status: state.selectedOrderStatus == OrderStatus.all
-          ? null
-          : state.selectedOrderStatus.name,
+      storeId: storeId,
+      storeName: storeName,
     );
 
     result.fold((failure) => state = state.copyWith(error: failure.message), (

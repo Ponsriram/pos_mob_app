@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_app/core/models/app_user.dart';
 
 /// Provider for SharedPreferences instance
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -20,6 +22,7 @@ class LocalStorageService {
   static const String _keyRefreshToken = 'refresh_token';
   static const String _keyLastLoginAt = 'last_login_at';
   static const String _keySelectedOutletId = 'selected_outlet_id';
+  static const String _keyCurrentUserJson = 'current_user_json';
 
   // Auth methods
   Future<void> saveAuthSession({
@@ -46,6 +49,7 @@ class LocalStorageService {
       _prefs.remove(_keyAccessToken),
       _prefs.remove(_keyRefreshToken),
       _prefs.remove(_keyLastLoginAt),
+      _prefs.remove(_keyCurrentUserJson),
     ]);
   }
 
@@ -57,6 +61,17 @@ class LocalStorageService {
   DateTime? get lastLoginAt {
     final str = _prefs.getString(_keyLastLoginAt);
     return str != null ? DateTime.tryParse(str) : null;
+  }
+
+  // Current user persistence
+  Future<void> saveCurrentUser(AppUser user) async {
+    await _prefs.setString(_keyCurrentUserJson, jsonEncode(user.toJson()));
+  }
+
+  AppUser? get currentUser {
+    final json = _prefs.getString(_keyCurrentUserJson);
+    if (json == null) return null;
+    return AppUser.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
 
   // Outlet selection

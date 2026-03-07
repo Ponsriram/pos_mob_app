@@ -1,36 +1,34 @@
-import 'dart:developer' as developer;
 import 'package:fpdart/fpdart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pos_app/core/error/failure.dart';
+import 'package:pos_app/core/error/api_exception.dart';
+import 'package:pos_app/core/network/api_client.dart';
 
 /// Store model representing a business outlet
 class StoreModel {
   final String id;
   final String name;
-  final String? slug;
-  final String? address;
+  final String? location;
   final String? phone;
   final String? email;
-  final String? logoUrl;
-  final String? gstin;
-  final String? fssaiNumber;
+  final String timezone;
   final String currency;
-  final double taxRate;
+  final bool taxInclusive;
+  final String? ownerId;
+  final String? chainId;
   final bool isActive;
   final DateTime createdAt;
 
   const StoreModel({
     required this.id,
     required this.name,
-    this.slug,
-    this.address,
+    this.location,
     this.phone,
     this.email,
-    this.logoUrl,
-    this.gstin,
-    this.fssaiNumber,
+    this.timezone = 'Asia/Kolkata',
     this.currency = 'INR',
-    this.taxRate = 18.0,
+    this.taxInclusive = false,
+    this.ownerId,
+    this.chainId,
     this.isActive = true,
     required this.createdAt,
   });
@@ -39,15 +37,14 @@ class StoreModel {
     return StoreModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      slug: json['slug'] as String?,
-      address: json['address'] as String?,
+      location: json['location'] as String?,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
-      logoUrl: json['logo_url'] as String?,
-      gstin: json['gstin'] as String?,
-      fssaiNumber: json['fssai_number'] as String?,
+      timezone: json['timezone'] as String? ?? 'Asia/Kolkata',
       currency: json['currency'] as String? ?? 'INR',
-      taxRate: (json['tax_rate'] as num?)?.toDouble() ?? 18.0,
+      taxInclusive: json['tax_inclusive'] as bool? ?? false,
+      ownerId: json['owner_id']?.toString(),
+      chainId: json['chain_id']?.toString(),
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
@@ -57,51 +54,45 @@ class StoreModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'name': name,
-      'slug': slug,
-      'address': address,
+      'location': location,
       'phone': phone,
       'email': email,
-      'logo_url': logoUrl,
-      'gstin': gstin,
-      'fssai_number': fssaiNumber,
+      'timezone': timezone,
       'currency': currency,
-      'tax_rate': taxRate,
-      'is_active': isActive,
+      'tax_inclusive': taxInclusive,
+      if (chainId != null) 'chain_id': chainId,
     };
   }
+
+  /// Backward-compatible address getter (maps location → address)
+  String? get address => location;
 }
 
 /// Repository for store/outlet operations
 abstract class StoreRepository {
   Future<Either<Failure, List<StoreModel>>> getStores();
-  Future<Either<Failure, StoreModel>> getStoreById(String id);
   Future<Either<Failure, List<StoreModel>>> getAccessibleStores();
-  Stream<List<StoreModel>> watchStores();
+  Future<Either<Failure, StoreModel>> getStoreById(String id);
+  Future<Either<Failure, StoreModel>> createStore(Map<String, dynamic> data);
 }
 
-/// Supabase implementation of StoreRepository
+/// REST API implementation of StoreRepository
 class StoreRepositoryImpl implements StoreRepository {
-  final SupabaseClient _client;
+  final ApiClient _client;
 
   StoreRepositoryImpl(this._client);
 
   @override
   Future<Either<Failure, List<StoreModel>>> getStores() async {
     try {
-      final response = await _client
-          .from('stores')
-          .select()
-          .eq('is_active', true)
-          .order('name');
-
-      final stores = (response as List)
-          .map((e) => StoreModel.fromJson(e))
+      final response = await _client.get('/stores');
+      final stores = (response.data as List)
+          .map((e) => StoreModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return right(stores);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to fetch stores: $e'));
     }
@@ -110,141 +101,30 @@ class StoreRepositoryImpl implements StoreRepository {
   @override
   Future<Either<Failure, StoreModel>> getStoreById(String id) async {
     try {
-      final response = await _client
-          .from('stores')
-          .select()
-          .eq('id', id)
-          .single();
-
-      return right(StoreModel.fromJson(response));
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
+      final response = await _client.get('/stores/$id');
+      return right(StoreModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to fetch store: $e'));
     }
   }
 
   @override
-  Future<Either<Failure, List<StoreModel>>> getAccessibleStores() async {
-    try {
-      // Get current user's profile with accessible stores and role
-      final userId = _client.auth.currentUser?.id;
-      if (userId == null) {
-        developer.log('StoreRepo: User not authenticated', name: 'StoreRepo');
-        return left(const AuthFailure(message: 'User not authenticated'));
-      }
-
-      developer.log(
-        'StoreRepo: Fetching profile for user $userId',
-        name: 'StoreRepo',
-      );
-
-      final profileResponse = await _client
-          .from('profiles')
-          .select('store_id, accessible_store_ids, role')
-          .eq('id', userId)
-          .single();
-
-      final storeId = profileResponse['store_id'] as String?;
-      final accessibleIds =
-          (profileResponse['accessible_store_ids'] as List?)?.cast<String>() ??
-          [];
-      final role = profileResponse['role'] as String?;
-
-      developer.log(
-        'StoreRepo: Profile - role=$role, storeId=$storeId, accessibleIds=$accessibleIds',
-        name: 'StoreRepo',
-      );
-
-      List<StoreModel> stores = [];
-
-      // Priority 1: Check if accessible_store_ids exists and is not empty
-      if (accessibleIds.isNotEmpty) {
-        developer.log(
-          'StoreRepo: Priority 1 - Fetching by accessible_store_ids',
-          name: 'StoreRepo',
-        );
-        final storesResponse = await _client
-            .from('stores')
-            .select()
-            .inFilter('id', accessibleIds)
-            .eq('is_active', true)
-            .order('name');
-
-        stores = (storesResponse as List)
-            .map((e) => StoreModel.fromJson(e))
-            .toList();
-        developer.log(
-          'StoreRepo: Priority 1 found ${stores.length} stores',
-          name: 'StoreRepo',
-        );
-      }
-
-      // Priority 2: If no stores found, check if store_id exists
-      if (stores.isEmpty && storeId != null && storeId.isNotEmpty) {
-        developer.log(
-          'StoreRepo: Priority 2 - Fetching by store_id',
-          name: 'StoreRepo',
-        );
-        final storeResponse = await _client
-            .from('stores')
-            .select()
-            .eq('id', storeId)
-            .eq('is_active', true)
-            .maybeSingle();
-
-        if (storeResponse != null) {
-          stores = [StoreModel.fromJson(storeResponse)];
-          developer.log(
-            'StoreRepo: Priority 2 found 1 store',
-            name: 'StoreRepo',
-          );
-        }
-      }
-
-      // Priority 3: If still no stores and user is owner/admin, fetch all stores (limit 10)
-      if (stores.isEmpty &&
-          (role?.toLowerCase() == 'owner' || role?.toLowerCase() == 'admin')) {
-        developer.log(
-          'StoreRepo: Priority 3 - User is owner/admin, fetching all stores',
-          name: 'StoreRepo',
-        );
-        final storesResponse = await _client
-            .from('stores')
-            .select()
-            .eq('is_active', true)
-            .order('name')
-            .limit(10);
-
-        stores = (storesResponse as List)
-            .map((e) => StoreModel.fromJson(e))
-            .toList();
-        developer.log(
-          'StoreRepo: Priority 3 found ${stores.length} stores',
-          name: 'StoreRepo',
-        );
-      }
-
-      developer.log(
-        'StoreRepo: Returning ${stores.length} stores: ${stores.map((s) => s.name).toList()}',
-        name: 'StoreRepo',
-      );
-
-      return right(stores);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
-    } catch (e) {
-      return left(Failure(message: 'Failed to fetch accessible stores: $e'));
-    }
-  }
+  Future<Either<Failure, List<StoreModel>>> getAccessibleStores() =>
+      getStores();
 
   @override
-  Stream<List<StoreModel>> watchStores() {
-    return _client
-        .from('stores')
-        .stream(primaryKey: ['id'])
-        .eq('is_active', true)
-        .order('name')
-        .map((data) => data.map((e) => StoreModel.fromJson(e)).toList());
+  Future<Either<Failure, StoreModel>> createStore(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _client.post('/stores', data: data);
+      return right(StoreModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
+    } catch (e) {
+      return left(Failure(message: 'Failed to create store: $e'));
+    }
   }
 }

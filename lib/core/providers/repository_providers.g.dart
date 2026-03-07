@@ -6,7 +6,7 @@ part of 'repository_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$storeRepositoryHash() => r'75f832aecf88d67de97e22a00e04529639b476d4';
+String _$storeRepositoryHash() => r'a6ba60b849b55be450911aba5c19b229837ff28d';
 
 /// Store repository provider
 ///
@@ -26,7 +26,7 @@ final storeRepositoryProvider = AutoDisposeProvider<StoreRepository>.internal(
 // ignore: unused_element
 typedef StoreRepositoryRef = AutoDisposeProviderRef<StoreRepository>;
 String _$dashboardRepositoryHash() =>
-    r'680d91b76578d1ff03b1f8406423d0a117e605a6';
+    r'4e716b79fdb746a9265646f18002a7e815efbe79';
 
 /// Dashboard repository provider
 ///
@@ -46,7 +46,7 @@ final dashboardRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DashboardRepositoryRef = AutoDisposeProviderRef<DashboardRepository>;
-String _$orderRepositoryHash() => r'7667d8374b850c0a4a8790ba37022df5d65313e6';
+String _$orderRepositoryHash() => r'5ca9bc2c8a2618eb7414d6d522d5ca255311625a';
 
 /// Order repository provider
 ///
@@ -65,7 +65,7 @@ final orderRepositoryProvider = AutoDisposeProvider<OrderRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef OrderRepositoryRef = AutoDisposeProviderRef<OrderRepository>;
-String _$profileRepositoryHash() => r'b335f7574e1e390a45b7b9f704c7ee03b82c6d90';
+String _$profileRepositoryHash() => r'53019dc4b8985b6c8cc6da71ff7c8399046f0cc6';
 
 /// Profile repository provider
 ///
@@ -86,7 +86,7 @@ final profileRepositoryProvider =
 // ignore: unused_element
 typedef ProfileRepositoryRef = AutoDisposeProviderRef<ProfileRepository>;
 String _$salesReportRepositoryHash() =>
-    r'7bd3123c5e935f8e977649f92748e6aef661fcc7';
+    r'6f34f1be2b753bc6947de13b514907b5ecd5c60f';
 
 /// Sales report repository provider
 ///

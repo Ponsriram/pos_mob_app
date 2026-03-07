@@ -63,18 +63,18 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
     final onlineOrders = viewModel.orders
         .map(
           (order) => OnlineOrderModel(
-            orderNo: order.orderNumber,
+            orderNo: order.orderNumber ?? '',
             outletName:
                 viewModel.stores
                     .where((s) => s.id == order.storeId)
                     .firstOrNull
                     ?.name ??
                 'Unknown',
-            orderFrom: order.platform.name,
-            orderType: order.platform.name,
-            customerName: order.customerName ?? 'Guest',
+            orderFrom: order.channel,
+            orderType: order.channel,
+            customerName: 'Guest',
             dateTime: order.createdAt,
-            total: order.totalAmount,
+            total: order.netAmount,
             status: _mapOrderStatus(order.status),
           ),
         )

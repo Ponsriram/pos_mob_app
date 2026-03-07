@@ -1,18 +1,18 @@
-import 'dart:developer' as developer;
 import 'package:fpdart/fpdart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pos_app/core/error/failure.dart';
+import 'package:pos_app/core/error/api_exception.dart';
+import 'package:pos_app/core/network/api_client.dart';
 
 /// Dashboard statistics model
+/// Maps to backend AnalyticsSummary: total_revenue, total_orders, tax_collected,
+/// gross_sales, net_sales, total_discounts, payment_breakdown
 class DashboardStats {
   final double totalSales;
   final double netSales;
   final int totalOrders;
-  final int completedOrders;
-  final int pendingOrders;
-  final int cancelledOrders;
-  final double averageOrderValue;
-  final int totalCustomers;
+  final double grossSales;
+  final double taxCollected;
+  final double totalDiscounts;
   final double cashSales;
   final double cardSales;
   final double upiSales;
@@ -22,11 +22,9 @@ class DashboardStats {
     this.totalSales = 0,
     this.netSales = 0,
     this.totalOrders = 0,
-    this.completedOrders = 0,
-    this.pendingOrders = 0,
-    this.cancelledOrders = 0,
-    this.averageOrderValue = 0,
-    this.totalCustomers = 0,
+    this.grossSales = 0,
+    this.taxCollected = 0,
+    this.totalDiscounts = 0,
     this.cashSales = 0,
     this.cardSales = 0,
     this.upiSales = 0,
@@ -34,202 +32,111 @@ class DashboardStats {
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
+    final breakdown = json['payment_breakdown'] as Map<String, dynamic>? ?? {};
     return DashboardStats(
-      totalSales: (json['total_sales'] as num?)?.toDouble() ?? 0,
+      totalSales: (json['total_revenue'] as num?)?.toDouble() ?? 0,
       netSales: (json['net_sales'] as num?)?.toDouble() ?? 0,
       totalOrders: json['total_orders'] as int? ?? 0,
-      completedOrders: json['completed_orders'] as int? ?? 0,
-      pendingOrders: json['pending_orders'] as int? ?? 0,
-      cancelledOrders: json['cancelled_orders'] as int? ?? 0,
-      averageOrderValue: (json['average_order_value'] as num?)?.toDouble() ?? 0,
-      totalCustomers: json['total_customers'] as int? ?? 0,
-      cashSales: (json['cash_sales'] as num?)?.toDouble() ?? 0,
-      cardSales: (json['card_sales'] as num?)?.toDouble() ?? 0,
-      upiSales: (json['upi_sales'] as num?)?.toDouble() ?? 0,
-      onlineSales: (json['online_sales'] as num?)?.toDouble() ?? 0,
+      grossSales: (json['gross_sales'] as num?)?.toDouble() ?? 0,
+      taxCollected: (json['tax_collected'] as num?)?.toDouble() ?? 0,
+      totalDiscounts: (json['total_discounts'] as num?)?.toDouble() ?? 0,
+      cashSales: (breakdown['cash'] as num?)?.toDouble() ?? 0,
+      cardSales: (breakdown['card'] as num?)?.toDouble() ?? 0,
+      upiSales: (breakdown['upi'] as num?)?.toDouble() ?? 0,
+      onlineSales: (breakdown['wallet'] as num?)?.toDouble() ?? 0,
     );
   }
 
   static const empty = DashboardStats();
+
+  double get averageOrderValue =>
+      totalOrders > 0 ? totalSales / totalOrders : 0;
+
+  /// Backward-compat: completedOrders is just totalOrders from aggregated data
+  int get completedOrders => totalOrders;
 }
 
-/// Outlet-specific statistics
+/// Outlet-level statistics (simplified — backend doesn't have per-outlet breakdown)
 class OutletStats {
   final String storeId;
   final String storeName;
-  final double totalSales;
   final int totalOrders;
-  final int itemsSold;
+  final double totalSales;
   final double netSales;
 
   const OutletStats({
     required this.storeId,
     required this.storeName,
-    this.totalSales = 0,
     this.totalOrders = 0,
-    this.itemsSold = 0,
+    this.totalSales = 0,
     this.netSales = 0,
   });
-
-  factory OutletStats.fromJson(Map<String, dynamic> json) {
-    return OutletStats(
-      storeId: json['store_id'] as String,
-      storeName: json['store_name'] as String? ?? 'Unknown',
-      totalSales: (json['total_sales'] as num?)?.toDouble() ?? 0,
-      totalOrders: json['total_orders'] as int? ?? 0,
-      itemsSold: json['items_sold'] as int? ?? 0,
-      netSales: (json['net_sales'] as num?)?.toDouble() ?? 0,
-    );
-  }
 }
 
 /// Repository for dashboard data
 abstract class DashboardRepository {
   Future<Either<Failure, DashboardStats>> getDashboardStats({
-    required String? storeId,
-    required DateTime date,
+    String? storeId,
+    DateTime? date,
+    DateTime? startDate,
+    DateTime? endDate,
   });
 
-  Future<Either<Failure, List<OutletStats>>> getOutletStats({
-    required DateTime date,
-  });
-
-  Future<Either<Failure, Map<String, dynamic>>> getDailySalesSummary({
-    required String storeId,
-    required DateTime date,
-  });
+  Future<Either<Failure, List<OutletStats>>> getOutletStats({DateTime? date});
 }
 
-/// Supabase implementation of DashboardRepository
+/// REST API implementation of DashboardRepository
 class DashboardRepositoryImpl implements DashboardRepository {
-  final SupabaseClient _client;
+  final ApiClient _client;
 
   DashboardRepositoryImpl(this._client);
 
   @override
   Future<Either<Failure, DashboardStats>> getDashboardStats({
-    required String? storeId,
-    required DateTime date,
+    String? storeId,
+    DateTime? date,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     try {
-      final dateStr = date.toIso8601String().split('T')[0];
-      developer.log(
-        'DashboardRepo: getDashboardStats - storeId=$storeId, date=$dateStr',
-        name: 'DashboardRepo',
-      );
+      // If only date is given, use it as both start and end
+      final effectiveStart = startDate ?? date ?? DateTime.now();
+      final effectiveEnd = endDate ?? date ?? DateTime.now();
+      final startStr = effectiveStart.toIso8601String().split('T')[0];
+      final endStr = effectiveEnd.toIso8601String().split('T')[0];
 
-      if (storeId != null && storeId != 'all') {
-        // Call Supabase RPC function for specific store
-        developer.log(
-          'DashboardRepo: Calling get_dashboard_stats RPC for store $storeId',
-          name: 'DashboardRepo',
-        );
-        final response = await _client.rpc(
-          'get_dashboard_stats',
-          params: {'p_store_id': storeId, 'p_date': dateStr},
-        );
-
-        developer.log(
-          'DashboardRepo: RPC response = $response',
-          name: 'DashboardRepo',
-        );
-
-        if (response == null) {
-          developer.log(
-            'DashboardRepo: Response is null, returning empty stats',
-            name: 'DashboardRepo',
-          );
-          return right(DashboardStats.empty);
-        }
-
-        return right(DashboardStats.fromJson(response as Map<String, dynamic>));
-      } else {
-        // Aggregate stats for all stores
-        developer.log(
-          'DashboardRepo: Calling get_dashboard_stats_all RPC',
-          name: 'DashboardRepo',
-        );
-        final response = await _client.rpc(
-          'get_dashboard_stats_all',
-          params: {'p_date': dateStr},
-        );
-
-        developer.log(
-          'DashboardRepo: RPC response = $response',
-          name: 'DashboardRepo',
-        );
-
-        if (response == null) {
-          developer.log(
-            'DashboardRepo: Response is null, returning empty stats',
-            name: 'DashboardRepo',
-          );
-          return right(DashboardStats.empty);
-        }
-
-        return right(DashboardStats.fromJson(response as Map<String, dynamic>));
+      final queryParams = <String, dynamic>{
+        'start_date': startStr,
+        'end_date': endStr,
+      };
+      if (storeId != null && storeId.isNotEmpty) {
+        queryParams['store_id'] = storeId;
       }
-    } on PostgrestException catch (e) {
-      developer.log(
-        'DashboardRepo: PostgrestException - ${e.message}',
-        name: 'DashboardRepo',
+
+      final response = await _client.get(
+        '/analytics/summary',
+        queryParameters: queryParams,
       );
-      return left(DatabaseFailure(message: e.message, code: e.code));
+
+      if (response.data == null) {
+        return right(DashboardStats.empty);
+      }
+
+      return right(
+        DashboardStats.fromJson(response.data as Map<String, dynamic>),
+      );
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
-      developer.log('DashboardRepo: Exception - $e', name: 'DashboardRepo');
       return left(Failure(message: 'Failed to fetch dashboard stats: $e'));
     }
   }
 
   @override
   Future<Either<Failure, List<OutletStats>>> getOutletStats({
-    required DateTime date,
+    DateTime? date,
   }) async {
-    try {
-      final dateStr = date.toIso8601String().split('T')[0];
-
-      final response = await _client.rpc(
-        'get_outlet_stats',
-        params: {'p_date': dateStr},
-      );
-
-      if (response == null) {
-        return right([]);
-      }
-
-      final stats = (response as List)
-          .map((e) => OutletStats.fromJson(e))
-          .toList();
-      return right(stats);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
-    } catch (e) {
-      return left(Failure(message: 'Failed to fetch outlet stats: $e'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> getDailySalesSummary({
-    required String storeId,
-    required DateTime date,
-  }) async {
-    try {
-      final dateStr = date.toIso8601String().split('T')[0];
-
-      final response = await _client.rpc(
-        'get_daily_sales_summary',
-        params: {'p_store_id': storeId, 'p_date': dateStr},
-      );
-
-      if (response == null) {
-        return right({});
-      }
-
-      return right(response as Map<String, dynamic>);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
-    } catch (e) {
-      return left(Failure(message: 'Failed to fetch sales summary: $e'));
-    }
+    // Backend doesn't provide per-outlet breakdown — return empty
+    return right([]);
   }
 }

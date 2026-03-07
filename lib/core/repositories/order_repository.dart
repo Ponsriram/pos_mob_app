@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pos_app/core/error/failure.dart';
+import 'package:pos_app/core/error/api_exception.dart';
+import 'package:pos_app/core/network/api_client.dart';
 
 /// Order status enum
 enum OrderStatus {
@@ -104,45 +105,55 @@ extension OrderPlatformExtension on OrderPlatform {
   }
 }
 
-/// Order model
+/// Order model — maps to backend OrderResponse
 class OrderModel {
   final String id;
   final String storeId;
-  final String orderNumber;
-  final String? customerId;
-  final String? customerName;
+  final String? orderNumber;
+  final String? employeeId;
+  final String? terminalId;
   final String? tableId;
-  final String? tableName;
+  final String? guestId;
+  final String? shiftId;
   final OrderStatus status;
-  final OrderPlatform platform;
-  final String? platformOrderId;
-  final double subtotal;
+  final String orderType;
+  final String channel;
+  final double grossAmount;
   final double taxAmount;
   final double discountAmount;
-  final double totalAmount;
+  final double serviceCharge;
+  final double tipAmount;
+  final double netAmount;
+  final String paymentStatus;
   final String? notes;
+  final String? cancelReason;
   final DateTime createdAt;
-  final DateTime? completedAt;
+  final DateTime? updatedAt;
   final List<OrderItemModel> items;
 
   const OrderModel({
     required this.id,
     required this.storeId,
-    required this.orderNumber,
-    this.customerId,
-    this.customerName,
+    this.orderNumber,
+    this.employeeId,
+    this.terminalId,
     this.tableId,
-    this.tableName,
+    this.guestId,
+    this.shiftId,
     required this.status,
-    required this.platform,
-    this.platformOrderId,
-    this.subtotal = 0,
+    this.orderType = 'dine_in',
+    this.channel = 'pos',
+    this.grossAmount = 0,
     this.taxAmount = 0,
     this.discountAmount = 0,
-    this.totalAmount = 0,
+    this.serviceCharge = 0,
+    this.tipAmount = 0,
+    this.netAmount = 0,
+    this.paymentStatus = 'pending',
     this.notes,
+    this.cancelReason,
     required this.createdAt,
-    this.completedAt,
+    this.updatedAt,
     this.items = const [],
   });
 
@@ -150,82 +161,92 @@ class OrderModel {
     return OrderModel(
       id: json['id'] as String,
       storeId: json['store_id'] as String,
-      orderNumber: json['order_number'] as String,
-      customerId: json['customer_id'] as String?,
-      customerName:
-          json['customer_name'] as String? ??
-          (json['customer'] as Map<String, dynamic>?)?['name'] as String?,
-      tableId: json['table_id'] as String?,
-      tableName:
-          json['table_name'] as String? ??
-          (json['restaurant_table'] as Map<String, dynamic>?)?['name']
-              as String?,
-      status: OrderStatusExtension.fromString(json['status'] as String),
-      platform: OrderPlatformExtension.fromString(
-        json['order_type'] as String? ?? 'dine_in',
+      orderNumber: json['order_number'] as String?,
+      employeeId: json['employee_id']?.toString(),
+      terminalId: json['terminal_id']?.toString(),
+      tableId: json['table_id']?.toString(),
+      guestId: json['guest_id']?.toString(),
+      shiftId: json['shift_id']?.toString(),
+      status: OrderStatusExtension.fromString(
+        json['status'] as String? ?? 'pending',
       ),
-      platformOrderId: json['platform_order_id'] as String?,
-      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
+      orderType: json['order_type'] as String? ?? 'dine_in',
+      channel: json['channel'] as String? ?? 'pos',
+      grossAmount: (json['gross_amount'] as num?)?.toDouble() ?? 0,
       taxAmount: (json['tax_amount'] as num?)?.toDouble() ?? 0,
       discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
-      totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0,
+      serviceCharge: (json['service_charge'] as num?)?.toDouble() ?? 0,
+      tipAmount: (json['tip_amount'] as num?)?.toDouble() ?? 0,
+      netAmount: (json['net_amount'] as num?)?.toDouble() ?? 0,
+      paymentStatus: json['payment_status'] as String? ?? 'pending',
       notes: json['notes'] as String?,
+      cancelReason: json['cancel_reason'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
-      completedAt: json['completed_at'] != null
-          ? DateTime.parse(json['completed_at'] as String)
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
           : null,
       items:
-          (json['order_items'] as List?)
-              ?.map((e) => OrderItemModel.fromJson(e))
+          (json['items'] as List?)
+              ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
   }
+
+  /// Backward-compatible getters
+  double get totalAmount => netAmount;
+  double get subtotal => grossAmount;
+  OrderPlatform get platform => OrderPlatformExtension.fromString(orderType);
 }
 
-/// Order item model
+/// Order item model — maps to backend OrderItemResponse
 class OrderItemModel {
   final String id;
   final String orderId;
-  final String productId;
-  final String productName;
-  final String? variantId;
-  final String? variantName;
+  final String? productId;
   final int quantity;
-  final double unitPrice;
-  final double totalPrice;
+  final double price;
+  final double taxAmount;
+  final double discountAmount;
+  final double total;
+  final String status;
   final String? notes;
+  final String? kitchenStatus;
 
   const OrderItemModel({
     required this.id,
     required this.orderId,
-    required this.productId,
-    required this.productName,
-    this.variantId,
-    this.variantName,
+    this.productId,
     required this.quantity,
-    required this.unitPrice,
-    required this.totalPrice,
+    required this.price,
+    this.taxAmount = 0,
+    this.discountAmount = 0,
+    this.total = 0,
+    this.status = 'active',
     this.notes,
+    this.kitchenStatus,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
       id: json['id'] as String,
       orderId: json['order_id'] as String,
-      productId: json['product_id'] as String,
-      productName:
-          json['product_name'] as String? ??
-          (json['product'] as Map<String, dynamic>?)?['name'] as String? ??
-          'Unknown',
-      variantId: json['variant_id'] as String?,
-      variantName: json['variant_name'] as String?,
+      productId: json['product_id']?.toString(),
       quantity: json['quantity'] as int? ?? 1,
-      unitPrice: (json['unit_price'] as num?)?.toDouble() ?? 0,
-      totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0,
+      price: (json['price'] as num?)?.toDouble() ?? 0,
+      taxAmount: (json['tax_amount'] as num?)?.toDouble() ?? 0,
+      discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
+      total: (json['total'] as num?)?.toDouble() ?? 0,
+      status: json['status'] as String? ?? 'active',
       notes: json['notes'] as String?,
+      kitchenStatus: json['kitchen_status'] as String?,
     );
   }
+
+  /// Backward-compatible getters
+  double get unitPrice => price;
+  double get totalPrice => total;
+  String get productName => ''; // Product name not in OrderItemResponse
 }
 
 /// Repository for order operations
@@ -233,11 +254,10 @@ abstract class OrderRepository {
   Future<Either<Failure, List<OrderModel>>> getOrders({
     required String storeId,
     OrderStatus? status,
-    OrderPlatform? platform,
-    DateTime? startDate,
-    DateTime? endDate,
-    int limit = 50,
-    int offset = 0,
+    String? orderType,
+    String? channel,
+    int limit,
+    int offset,
   });
 
   Future<Either<Failure, List<OrderModel>>> getRunningOrders({
@@ -246,29 +266,28 @@ abstract class OrderRepository {
 
   Future<Either<Failure, List<OrderModel>>> getOnlineOrders({
     required String storeId,
-    OrderStatus? status,
-    OrderPlatform? platform,
   });
 
   Future<Either<Failure, OrderModel>> getOrderById(String id);
 
   Future<Either<Failure, OrderModel>> createOrder({
-    required String storeId,
     required Map<String, dynamic> orderData,
-    required List<Map<String, dynamic>> items,
   });
 
   Future<Either<Failure, OrderModel>> updateOrderStatus({
     required String orderId,
-    required OrderStatus status,
+    required dynamic status,
   });
 
-  Stream<List<OrderModel>> watchRunningOrders(String storeId);
+  Future<Either<Failure, OrderModel>> cancelOrder({
+    required String orderId,
+    required String reason,
+  });
 }
 
-/// Supabase implementation of OrderRepository
+/// REST API implementation of OrderRepository
 class OrderRepositoryImpl implements OrderRepository {
-  final SupabaseClient _client;
+  final ApiClient _client;
 
   OrderRepositoryImpl(this._client);
 
@@ -276,44 +295,37 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Either<Failure, List<OrderModel>>> getOrders({
     required String storeId,
     OrderStatus? status,
-    OrderPlatform? platform,
-    DateTime? startDate,
-    DateTime? endDate,
+    String? orderType,
+    String? channel,
     int limit = 50,
     int offset = 0,
   }) async {
     try {
-      var query = _client
-          .from('orders')
-          .select('*, order_items(*, product:products(name))')
-          .eq('store_id', storeId);
-
+      final queryParams = <String, dynamic>{
+        'store_id': storeId,
+        'limit': limit,
+        'offset': offset,
+      };
       if (status != null && status != OrderStatus.all) {
-        query = query.eq('status', status.value);
+        queryParams['status'] = status.value;
+      }
+      if (orderType != null) {
+        queryParams['order_type'] = orderType;
+      }
+      if (channel != null) {
+        queryParams['channel'] = channel;
       }
 
-      if (platform != null && platform != OrderPlatform.all) {
-        query = query.eq('order_type', platform.value);
-      }
-
-      if (startDate != null) {
-        query = query.gte('created_at', startDate.toIso8601String());
-      }
-
-      if (endDate != null) {
-        query = query.lte('created_at', endDate.toIso8601String());
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .range(offset, offset + limit - 1);
-
-      final orders = (response as List)
-          .map((e) => OrderModel.fromJson(e))
+      final response = await _client.get(
+        '/orders',
+        queryParameters: queryParams,
+      );
+      final orders = (response.data as List)
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return right(orders);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to fetch orders: $e'));
     }
@@ -322,79 +334,25 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<Either<Failure, List<OrderModel>>> getRunningOrders({
     required String storeId,
-  }) async {
-    try {
-      final response = await _client
-          .from('orders')
-          .select('*, order_items(*, product:products(name))')
-          .eq('store_id', storeId)
-          .inFilter('status', ['pending', 'confirmed', 'preparing', 'ready'])
-          .order('created_at', ascending: false);
-
-      final orders = (response as List)
-          .map((e) => OrderModel.fromJson(e))
-          .toList();
-      return right(orders);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
-    } catch (e) {
-      return left(Failure(message: 'Failed to fetch running orders: $e'));
-    }
+  }) {
+    // Running orders = pending + preparing + ready statuses
+    return getOrders(storeId: storeId, status: OrderStatus.pending, limit: 200);
   }
 
   @override
   Future<Either<Failure, List<OrderModel>>> getOnlineOrders({
     required String storeId,
-    OrderStatus? status,
-    OrderPlatform? platform,
-  }) async {
-    try {
-      var query = _client
-          .from('orders')
-          .select('*, order_items(*, product:products(name))')
-          .eq('store_id', storeId)
-          .inFilter('order_type', [
-            'swiggy',
-            'zomato',
-            'foodpanda',
-            'uber_eats',
-          ]);
-
-      if (status != null && status != OrderStatus.all) {
-        query = query.eq('status', status.value);
-      }
-
-      if (platform != null && platform != OrderPlatform.all) {
-        query = query.eq('order_type', platform.value);
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .limit(100);
-
-      final orders = (response as List)
-          .map((e) => OrderModel.fromJson(e))
-          .toList();
-      return right(orders);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
-    } catch (e) {
-      return left(Failure(message: 'Failed to fetch online orders: $e'));
-    }
+  }) {
+    return getOrders(storeId: storeId, channel: 'online', limit: 200);
   }
 
   @override
   Future<Either<Failure, OrderModel>> getOrderById(String id) async {
     try {
-      final response = await _client
-          .from('orders')
-          .select('*, order_items(*, product:products(name))')
-          .eq('id', id)
-          .single();
-
-      return right(OrderModel.fromJson(response));
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
+      final response = await _client.get('/orders/$id');
+      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to fetch order: $e'));
     }
@@ -402,28 +360,13 @@ class OrderRepositoryImpl implements OrderRepository {
 
   @override
   Future<Either<Failure, OrderModel>> createOrder({
-    required String storeId,
     required Map<String, dynamic> orderData,
-    required List<Map<String, dynamic>> items,
   }) async {
     try {
-      final response = await _client.rpc(
-        'create_order_with_items',
-        params: {
-          'p_store_id': storeId,
-          'p_order_data': orderData,
-          'p_items': items,
-        },
-      );
-
-      if (response == null) {
-        return left(const Failure(message: 'Failed to create order'));
-      }
-
-      // Fetch the created order with items
-      return getOrderById(response['id'] as String);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
+      final response = await _client.post('/orders', data: orderData);
+      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to create order: $e'));
     }
@@ -432,45 +375,39 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<Either<Failure, OrderModel>> updateOrderStatus({
     required String orderId,
-    required OrderStatus status,
+    required dynamic status,
   }) async {
     try {
-      await _client
-          .from('orders')
-          .update({
-            'status': status.value,
-            if (status == OrderStatus.completed)
-              'completed_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', orderId);
-
-      return getOrderById(orderId);
-    } on PostgrestException catch (e) {
-      return left(DatabaseFailure(message: e.message, code: e.code));
+      final statusStr = status is OrderStatus
+          ? status.value
+          : status.toString();
+      final response = await _client.put(
+        '/orders/$orderId/status',
+        data: {'status': statusStr},
+      );
+      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to update order status: $e'));
     }
   }
 
   @override
-  Stream<List<OrderModel>> watchRunningOrders(String storeId) {
-    return _client
-        .from('orders')
-        .stream(primaryKey: ['id'])
-        .eq('store_id', storeId)
-        .order('created_at', ascending: false)
-        .map(
-          (data) => data
-              .where(
-                (e) => [
-                  'pending',
-                  'confirmed',
-                  'preparing',
-                  'ready',
-                ].contains(e['status']),
-              )
-              .map((e) => OrderModel.fromJson(e))
-              .toList(),
-        );
+  Future<Either<Failure, OrderModel>> cancelOrder({
+    required String orderId,
+    required String reason,
+  }) async {
+    try {
+      final response = await _client.put(
+        '/orders/$orderId/cancel',
+        data: {'reason': reason},
+      );
+      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
+    } catch (e) {
+      return left(Failure(message: 'Failed to cancel order: $e'));
+    }
   }
 }

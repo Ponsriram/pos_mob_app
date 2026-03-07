@@ -6,9 +6,9 @@ part of 'auth_viewmodel.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$authRepositoryHash() => r'234c48f4d83559674c59291994bcdcdec26d0d35';
+String _$authRepositoryHash() => r'e2f6e6ac0bc74b8dc2d6fb12b3df1c4f7aab12fa';
 
-/// Auth repository provider (Supabase - for email, Google auth)
+/// Auth repository provider
 ///
 /// Copied from [authRepository].
 @ProviderFor(authRepository)
@@ -25,29 +25,7 @@ final authRepositoryProvider = AutoDisposeProvider<AuthRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AuthRepositoryRef = AutoDisposeProviderRef<AuthRepository>;
-String _$firebasePhoneAuthRepositoryHash() =>
-    r'a4ffda77f89092a0d571f09bb8458b9ab4216ff1';
-
-/// Firebase Phone Auth repository provider (for phone OTP - free)
-///
-/// Copied from [firebasePhoneAuthRepository].
-@ProviderFor(firebasePhoneAuthRepository)
-final firebasePhoneAuthRepositoryProvider =
-    AutoDisposeProvider<FirebasePhoneAuthRepository>.internal(
-      firebasePhoneAuthRepository,
-      name: r'firebasePhoneAuthRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$firebasePhoneAuthRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FirebasePhoneAuthRepositoryRef =
-    AutoDisposeProviderRef<FirebasePhoneAuthRepository>;
-String _$authViewModelHash() => r'6c0ab0292bf3f8cb49aa1b2597c7bfd7ee796453';
+String _$authViewModelHash() => r'a4360473efb44727de3582c1b9cc060e364883ba';
 
 /// Auth ViewModel
 ///

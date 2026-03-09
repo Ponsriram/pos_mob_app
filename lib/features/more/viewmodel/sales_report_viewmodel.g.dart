@@ -7,7 +7,7 @@ part of 'sales_report_viewmodel.dart';
 // **************************************************************************
 
 String _$salesReportViewModelHash() =>
-    r'664951f4a4709b9cabdaa8b66c484093514a98f7';
+    r'3feeff60b8dc1e003e05536bc5ee90f3e605d618';
 
 /// ViewModel for the Sales Report Detail screen using Riverpod
 ///

@@ -7,7 +7,7 @@ part of 'franchise_viewmodel.dart';
 // **************************************************************************
 
 String _$franchiseViewModelHash() =>
-    r'86607fa387381dcefd3e3064535d74f98c7e907c';
+    r'92a0fba83289a1f34da76ef9f4baefa5e4fdb0f1';
 
 /// ViewModel for Franchise screen using Riverpod
 ///

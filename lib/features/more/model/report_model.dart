@@ -14,6 +14,16 @@ class ReportModel {
     required this.category,
   });
 
+  factory ReportModel.fromJson(Map<String, dynamic> json) {
+    return ReportModel(
+      id: json['id']?.toString() ?? json['code'] as String? ?? '',
+      title: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      isFavorite: false,
+      category: json['category'] as String? ?? 'General',
+    );
+  }
+
   ReportModel copyWith({
     String? id,
     String? title,

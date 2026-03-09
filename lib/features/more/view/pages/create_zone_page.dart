@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/common/common_scaffold.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../viewmodel/zone_viewmodel.dart';
 

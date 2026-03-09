@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/store_provider.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
 
 part 'item_out_of_stock_viewmodel.g.dart';
@@ -18,6 +19,8 @@ class ItemOutOfStockState {
   final bool showRestaurantsWithAllItemsInStock;
   final bool isLoading;
   final String? error;
+  final List<String> categoryList;
+  final List<Map<String, dynamic>> products;
 
   const ItemOutOfStockState({
     this.selectedStoreId,
@@ -32,6 +35,8 @@ class ItemOutOfStockState {
     this.showRestaurantsWithAllItemsInStock = false,
     this.isLoading = false,
     this.error,
+    this.categoryList = const ['All'],
+    this.products = const [],
   });
 
   List<String> get availableOutlets => [
@@ -56,14 +61,8 @@ class ItemOutOfStockState {
     return store?.name ?? 'All';
   }
 
-  /// Categories - will be fetched from real data in future
-  List<String> get categories => const [
-    'All',
-    'Beverages',
-    'Snacks',
-    'Main Course',
-    'Desserts',
-  ];
+  /// Categories fetched from backend
+  List<String> get categories => categoryList;
 
   /// Brands - will be fetched from real data in future
   List<String> get brands => const ['All'];
@@ -92,6 +91,8 @@ class ItemOutOfStockState {
     bool? showRestaurantsWithAllItemsInStock,
     bool? isLoading,
     String? error,
+    List<String>? categoryList,
+    List<Map<String, dynamic>>? products,
   }) {
     return ItemOutOfStockState(
       selectedStoreId: selectedStoreId ?? this.selectedStoreId,
@@ -108,6 +109,8 @@ class ItemOutOfStockState {
           this.showRestaurantsWithAllItemsInStock,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      categoryList: categoryList ?? this.categoryList,
+      products: products ?? this.products,
     );
   }
 }
@@ -120,10 +123,26 @@ class ItemOutOfStockViewModel extends _$ItemOutOfStockViewModel {
     // Watch global store provider for store list and selection
     final storeState = ref.watch(globalStoreNotifierProvider);
 
-    return ItemOutOfStockState(
+    final initialState = ItemOutOfStockState(
       stores: storeState.stores,
       selectedStoreId: storeState.selectedStoreId,
     );
+
+    // Load categories from backend
+    if (storeState.selectedStoreId != null) {
+      _loadCategories(storeState.selectedStoreId!);
+    }
+
+    return initialState;
+  }
+
+  Future<void> _loadCategories(String storeId) async {
+    final productRepo = ref.read(productRepositoryProvider);
+    final result = await productRepo.getCategories(storeId);
+    result.fold((failure) => {}, (categories) {
+      final categoryNames = ['All', ...categories.map((c) => c.name)];
+      state = state.copyWith(categoryList: categoryNames);
+    });
   }
 
   void setSelectedOutlet(String outletName) {
@@ -185,8 +204,37 @@ class ItemOutOfStockViewModel extends _$ItemOutOfStockViewModel {
 
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
-    // TODO: Implement actual search API call via repository
-    state = state.copyWith(isLoading: false);
+
+    final storeId = state.selectedStoreId ?? state.selectedRestaurantId;
+    if (storeId == null) {
+      state = state.copyWith(isLoading: false);
+      return;
+    }
+
+    final productRepo = ref.read(productRepositoryProvider);
+    final result = await productRepo.getProducts(storeId, activeOnly: false);
+    result.fold(
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
+      (products) {
+        final filtered = products
+            .where((p) {
+              if (!p.isActive) return true; // out-of-stock items
+              return false;
+            })
+            .map(
+              (p) => {
+                'id': p.id,
+                'name': p.name,
+                'categoryId': p.categoryId,
+                'price': p.price,
+                'isActive': p.isActive,
+              },
+            )
+            .toList();
+        state = state.copyWith(products: filtered, isLoading: false);
+      },
+    );
   }
 
   Future<void> exportData() async {

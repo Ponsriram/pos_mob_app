@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/common/common_scaffold.dart';
 import '../../viewmodel/running_orders_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../../dashboard/view/widgets/order_category_card.dart';

@@ -110,16 +110,15 @@ class OutletTypeViewModel extends _$OutletTypeViewModel {
   }
 
   void _loadOutletsFromStores(List<StoreModel> stores) {
-    // Convert stores to outlets - fetch outlet_type from store data or use default
+    // Use outletType, state, city from store model (fetched from backend)
     final outlets = stores
         .map(
           (store) => OutletModel(
             id: store.id,
             name: store.name,
-            state: store.address?.split(',').lastOrNull?.trim() ?? '',
-            city: store.address?.split(',').firstOrNull?.trim() ?? '',
-            outletType:
-                'COFO - Company Owned Franchisee', // Default, will be loaded from DB
+            state: store.state ?? '',
+            city: store.city ?? '',
+            outletType: store.outletType ?? 'COFO - Company Owned Franchisee',
           ),
         )
         .toList();
@@ -155,8 +154,16 @@ class OutletTypeViewModel extends _$OutletTypeViewModel {
     return state.selectedOutletTypes[outletId] ?? state.outletTypes.first;
   }
 
-  void save() {
-    // TODO: Implement save API call
+  Future<void> save() async {
+    // Save each changed outlet type to backend
+    for (final outlet in state.outlets) {
+      final selectedType = state.selectedOutletTypes[outlet.id];
+      if (selectedType != null && selectedType != outlet.outletType) {
+        await _storeRepo.updateStore(outlet.id, {'outlet_type': selectedType});
+      }
+    }
+    // Reload to reflect saved changes
+    await _loadInitialData();
   }
 
   void clearError() {

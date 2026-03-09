@@ -7,7 +7,7 @@ part of 'biller_group_viewmodel.dart';
 // **************************************************************************
 
 String _$billerGroupViewModelHash() =>
-    r'd8ddfce8166090f714dbe8debb4b288283bc7ffe';
+    r'6903f96407340b4e0ce293be3a9cde131c04ea3d';
 
 /// ViewModel for Biller Group Management page using Riverpod
 ///

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/integration_repository.dart';
 
 part 'store_status_tracking_viewmodel.g.dart';
 
@@ -15,6 +16,8 @@ class StoreStatusTrackingState {
   final int selectedTabIndex; // 0 for Restaurant Wise, 1 for Aggregator
   final bool isLoading;
   final String? error;
+  final List<String> aggregatorList;
+  final List<AggregatorStoreStatusModel> storeStatuses;
 
   const StoreStatusTrackingState({
     this.selectedStoreId,
@@ -26,6 +29,8 @@ class StoreStatusTrackingState {
     this.selectedTabIndex = 0,
     this.isLoading = false,
     this.error,
+    this.aggregatorList = const ['Select', 'All'],
+    this.storeStatuses = const [],
   });
 
   List<String> get availableOutlets => [
@@ -50,8 +55,8 @@ class StoreStatusTrackingState {
     return store?.name ?? 'All';
   }
 
-  /// Available aggregators
-  List<String> get aggregators => const ['Select', 'Swiggy', 'Zomato', 'All'];
+  /// Available aggregators fetched from backend
+  List<String> get aggregators => aggregatorList;
 
   /// Available brands
   List<String> get brands => const ['All'];
@@ -77,6 +82,8 @@ class StoreStatusTrackingState {
     int? selectedTabIndex,
     bool? isLoading,
     String? error,
+    List<String>? aggregatorList,
+    List<AggregatorStoreStatusModel>? storeStatuses,
   }) {
     return StoreStatusTrackingState(
       selectedStoreId: selectedStoreId ?? this.selectedStoreId,
@@ -89,6 +96,8 @@ class StoreStatusTrackingState {
       selectedTabIndex: selectedTabIndex ?? this.selectedTabIndex,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      aggregatorList: aggregatorList ?? this.aggregatorList,
+      storeStatuses: storeStatuses ?? this.storeStatuses,
     );
   }
 }
@@ -97,10 +106,12 @@ class StoreStatusTrackingState {
 @riverpod
 class StoreStatusTrackingViewModel extends _$StoreStatusTrackingViewModel {
   late StoreRepository _storeRepo;
+  late IntegrationRepository _integrationRepo;
 
   @override
   StoreStatusTrackingState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _integrationRepo = ref.watch(integrationRepositoryProvider);
     _loadInitialData();
     return const StoreStatusTrackingState();
   }
@@ -112,6 +123,26 @@ class StoreStatusTrackingViewModel extends _$StoreStatusTrackingViewModel {
       (failure) =>
           state = state.copyWith(error: failure.message, isLoading: false),
       (stores) => state = state.copyWith(stores: stores, isLoading: false),
+    );
+
+    // Load aggregators from backend
+    final aggResult = await _integrationRepo.getAggregators();
+    aggResult.fold((failure) => {}, (aggregators) {
+      final names = ['Select', ...aggregators.map((a) => a.name), 'All'];
+      state = state.copyWith(aggregatorList: names);
+    });
+
+    // Load store status if a store is selected
+    if (state.selectedStoreId != null) {
+      await _loadStoreStatus(state.selectedStoreId!);
+    }
+  }
+
+  Future<void> _loadStoreStatus(String storeId) async {
+    final result = await _integrationRepo.getStoreStatus(storeId);
+    result.fold(
+      (failure) => {},
+      (statuses) => state = state.copyWith(storeStatuses: statuses),
     );
   }
 

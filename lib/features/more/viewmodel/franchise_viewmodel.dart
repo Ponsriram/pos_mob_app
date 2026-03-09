@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/chain_repository.dart';
 import '../model/franchise_model.dart';
 
 part 'franchise_viewmodel.g.dart';
@@ -65,10 +66,12 @@ class FranchiseState {
 @riverpod
 class FranchiseViewModel extends _$FranchiseViewModel {
   late StoreRepository _storeRepo;
+  late ChainRepository _chainRepo;
 
   @override
   FranchiseState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _chainRepo = ref.watch(chainRepositoryProvider);
 
     _loadInitialData();
 
@@ -83,8 +86,33 @@ class FranchiseViewModel extends _$FranchiseViewModel {
       (failure) =>
           state = state.copyWith(error: failure.message, isLoading: false),
       (stores) {
-        // Convert stores to franchise outlets
-        final franchises = stores
+        state = state.copyWith(stores: stores);
+      },
+    );
+
+    // Load chains from backend
+    final chainsResult = await _chainRepo.getChains();
+    chainsResult.fold((failure) => state = state.copyWith(isLoading: false), (
+      chains,
+    ) async {
+      final List<FranchiseOutlet> allFranchises = [];
+      for (final chain in chains) {
+        final storesResult = await _chainRepo.getChainStores(chain.id);
+        storesResult.fold((failure) => {}, (chainStores) {
+          for (final store in chainStores) {
+            allFranchises.add(
+              FranchiseOutlet(
+                id: store.id,
+                name: store.name,
+                refId: chain.name,
+              ),
+            );
+          }
+        });
+      }
+      // If no chain data, fallback to stores
+      if (allFranchises.isEmpty) {
+        final franchises = state.stores
             .map(
               (s) => FranchiseOutlet(
                 id: s.id,
@@ -94,13 +122,18 @@ class FranchiseViewModel extends _$FranchiseViewModel {
             )
             .toList();
         state = state.copyWith(
-          stores: stores,
           franchises: franchises,
           filteredFranchises: franchises,
           isLoading: false,
         );
-      },
-    );
+      } else {
+        state = state.copyWith(
+          franchises: allFranchises,
+          filteredFranchises: allFranchises,
+          isLoading: false,
+        );
+      }
+    });
   }
 
   void setSelectedOutlet(String outletName) {

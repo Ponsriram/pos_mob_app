@@ -7,7 +7,7 @@ part of 'item_out_of_stock_viewmodel.dart';
 // **************************************************************************
 
 String _$itemOutOfStockViewModelHash() =>
-    r'cb17b50d38431ced58ab7349061ea7dca9ba3dc7';
+    r'dac50265ba8e11efc78abc4a69d594f542b648b0';
 
 /// ViewModel for the Item Out-Of-Stock Tracking screen
 ///

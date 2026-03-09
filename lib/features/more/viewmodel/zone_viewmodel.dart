@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/zone_repository.dart';
 
 part 'zone_viewmodel.g.dart';
 
@@ -38,8 +39,8 @@ class ZoneState {
           'id': s.id,
           'name': s.name,
           'subOrderType': '',
-          'state': s.address?.split(',').lastOrNull?.trim() ?? '',
-          'city': s.address?.split(',').firstOrNull?.trim() ?? '',
+          'state': s.state ?? '',
+          'city': s.city ?? '',
           'presentInZone': false,
         },
       )
@@ -64,10 +65,12 @@ class ZoneState {
 @riverpod
 class ZoneViewModel extends _$ZoneViewModel {
   late StoreRepository _storeRepo;
+  late ZoneRepository _zoneRepo;
 
   @override
   ZoneState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _zoneRepo = ref.watch(zoneRepositoryProvider);
     return const ZoneState();
   }
 
@@ -92,5 +95,25 @@ class ZoneViewModel extends _$ZoneViewModel {
 
   void clearError() {
     state = state.copyWith(error: null);
+  }
+
+  Future<void> createZone(Map<String, dynamic> zoneData) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _zoneRepo.createZone(zoneData);
+    result.fold(
+      (failure) =>
+          state = state.copyWith(error: failure.message, isLoading: false),
+      (_) => state = state.copyWith(isLoading: false),
+    );
+  }
+
+  Future<void> updateZone(String id, Map<String, dynamic> zoneData) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _zoneRepo.updateZone(id, zoneData);
+    result.fold(
+      (failure) =>
+          state = state.copyWith(error: failure.message, isLoading: false),
+      (_) => state = state.copyWith(isLoading: false),
+    );
   }
 }

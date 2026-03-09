@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/common/common_scaffold.dart';
 import '../../../../core/repositories/order_repository.dart' as repo;
 import '../../viewmodel/online_orders_viewmodel.dart';
 import '../../model/online_order_model.dart';

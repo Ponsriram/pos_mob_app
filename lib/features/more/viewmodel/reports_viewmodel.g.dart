@@ -6,7 +6,7 @@ part of 'reports_viewmodel.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$reportsViewModelHash() => r'c6fa72ad424de85f93d849467ccc7999549e39dd';
+String _$reportsViewModelHash() => r'4c060ec8c377a14b12dde9049d8fd7ab8928fb51';
 
 /// ViewModel for the Reports screen using Riverpod
 ///

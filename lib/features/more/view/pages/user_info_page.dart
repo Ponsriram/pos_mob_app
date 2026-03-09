@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/common/common_scaffold.dart';
 import '../../viewmodel/user_info_viewmodel.dart';
 import '../widgets/edit_profile/edit_user_info_dialog.dart';
 import '../widgets/edit_profile/user_logs_dialog.dart';

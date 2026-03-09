@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/user_repository.dart';
 
 part 'cloud_access_viewmodel.g.dart';
 
@@ -80,10 +81,12 @@ class CloudAccessState {
 @riverpod
 class CloudAccessViewModel extends _$CloudAccessViewModel {
   late StoreRepository _storeRepo;
+  late UserRepository _userRepo;
 
   @override
   CloudAccessState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _userRepo = ref.watch(userRepositoryProvider);
     _loadInitialData();
     return const CloudAccessState();
   }
@@ -128,9 +131,54 @@ class CloudAccessViewModel extends _$CloudAccessViewModel {
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Implement API call to search cloud access users
-    await Future.delayed(const Duration(milliseconds: 500));
-    state = state.copyWith(users: [], isLoading: false);
+    // Map filter values to API params
+    String? roleFilter;
+    if (state.selectedType != 'All') {
+      roleFilter = state.selectedType.toLowerCase().replaceAll(' ', '_');
+    }
+    bool? isActiveFilter;
+    if (state.selectedStatus == 'Active') {
+      isActiveFilter = true;
+    } else if (state.selectedStatus == 'Inactive') {
+      isActiveFilter = false;
+    }
+
+    final result = await _userRepo.getSubUsers(
+      role: roleFilter,
+      isActive: isActiveFilter,
+    );
+    result.fold(
+      (failure) =>
+          state = state.copyWith(error: failure.message, isLoading: false),
+      (subUsers) {
+        // Apply local name/email filters
+        var filtered = subUsers.where((u) {
+          if (state.name.isNotEmpty &&
+              !u.name.toLowerCase().contains(state.name.toLowerCase())) {
+            return false;
+          }
+          if (state.email.isNotEmpty &&
+              !u.email.toLowerCase().contains(state.email.toLowerCase())) {
+            return false;
+          }
+          return true;
+        }).toList();
+
+        final userMaps = filtered
+            .map(
+              (u) => {
+                'id': u.id,
+                'name': u.name,
+                'email': u.email,
+                'phone': u.phone ?? '',
+                'role': u.role,
+                'isActive': u.isActive,
+              },
+            )
+            .toList();
+        state = state.copyWith(users: userMaps, isLoading: false);
+      },
+    );
   }
 
   void showAll() {

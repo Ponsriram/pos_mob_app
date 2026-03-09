@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/purchasing_repository.dart';
 import '../model/pending_purchase_model.dart';
 
 part 'pending_purchase_viewmodel.g.dart';
@@ -86,10 +87,12 @@ class PendingPurchaseState {
 @riverpod
 class PendingPurchaseViewModel extends _$PendingPurchaseViewModel {
   late StoreRepository _storeRepo;
+  late PurchasingRepository _purchasingRepo;
 
   @override
   PendingPurchaseState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _purchasingRepo = ref.watch(purchasingRepositoryProvider);
     _loadInitialData();
     return PendingPurchaseState();
   }
@@ -128,9 +131,40 @@ class PendingPurchaseViewModel extends _$PendingPurchaseViewModel {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(purchases: [], isLoading: false);
+      final storeId =
+          state.selectedRestaurantId ??
+          (state.stores.isNotEmpty ? state.stores.first.id : null);
+      if (storeId == null) {
+        state = state.copyWith(purchases: [], isLoading: false);
+        return;
+      }
+
+      final result = await _purchasingRepo.getPendingSummary(storeId);
+      result.fold(
+        (failure) => state = state.copyWith(
+          purchases: [],
+          isLoading: false,
+          error: failure.message,
+        ),
+        (summaries) {
+          final purchases = summaries
+              .map(
+                (s) => PendingPurchaseModel(
+                  id: '${s.storeId}_${s.vendorId}',
+                  restaurantName: s.vendorName ?? '',
+                  itemName: '',
+                  quantity: s.pendingOrdersCount.toDouble(),
+                  unit: 'orders',
+                  amount: s.totalPendingAmount,
+                  date: DateTime.now(),
+                  status: 'pending',
+                  type: 'sales',
+                ),
+              )
+              .toList();
+          state = state.copyWith(purchases: purchases, isLoading: false);
+        },
+      );
     } catch (e) {
       state = state.copyWith(
         purchases: [],

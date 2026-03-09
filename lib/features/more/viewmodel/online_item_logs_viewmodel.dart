@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/store_provider.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/integration_repository.dart';
 
 part 'online_item_logs_viewmodel.g.dart';
 
@@ -94,8 +96,11 @@ class OnlineItemLogsState {
 /// ViewModel for Online Item On/Off Logs page
 @riverpod
 class OnlineItemLogsViewModel extends _$OnlineItemLogsViewModel {
+  late IntegrationRepository _integrationRepo;
+
   @override
   OnlineItemLogsState build() {
+    _integrationRepo = ref.watch(integrationRepositoryProvider);
     // Watch global store provider for store list and selection
     final storeState = ref.watch(globalStoreNotifierProvider);
 
@@ -158,10 +163,33 @@ class OnlineItemLogsViewModel extends _$OnlineItemLogsViewModel {
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Implement API call to search logs via repository
-    await Future.delayed(const Duration(milliseconds: 500));
+    final storeId = state.selectedStoreId;
+    if (storeId == null) {
+      state = state.copyWith(logs: [], isLoading: false);
+      return;
+    }
 
-    state = state.copyWith(logs: [], isLoading: false);
+    final result = await _integrationRepo.getItemLogs(storeId);
+    result.fold(
+      (failure) =>
+          state = state.copyWith(error: failure.message, isLoading: false),
+      (logList) {
+        final logMaps = logList
+            .map(
+              (log) => {
+                'id': log.id,
+                'storeId': log.storeId,
+                'aggregatorId': log.aggregatorId,
+                'logType': log.logType,
+                'status': log.status,
+                'message': log.errorMessage ?? '',
+                'createdAt': log.createdAt.toIso8601String(),
+              },
+            )
+            .toList();
+        state = state.copyWith(logs: logMaps, isLoading: false);
+      },
+    );
   }
 
   void reset() {

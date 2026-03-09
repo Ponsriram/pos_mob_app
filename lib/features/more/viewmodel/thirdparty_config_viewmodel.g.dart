@@ -7,7 +7,7 @@ part of 'thirdparty_config_viewmodel.dart';
 // **************************************************************************
 
 String _$thirdPartyConfigViewModelHash() =>
-    r'db049c9d04e0a1cfc758420cc1651f82169d5609';
+    r'46a8c15acdb2d1c216536ac2aa620ea4a0d9804b';
 
 /// ViewModel for the Third-Party Configuration screen using Riverpod
 ///

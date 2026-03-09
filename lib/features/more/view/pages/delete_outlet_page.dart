@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/common/common_scaffold.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 
 /// Delete Outlet page

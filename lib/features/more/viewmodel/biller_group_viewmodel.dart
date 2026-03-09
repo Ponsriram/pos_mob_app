@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/group_repository.dart';
 
 part 'biller_group_viewmodel.g.dart';
 
@@ -68,10 +69,12 @@ class BillerGroupState {
 @riverpod
 class BillerGroupViewModel extends _$BillerGroupViewModel {
   late StoreRepository _storeRepo;
+  late GroupRepository _groupRepo;
 
   @override
   BillerGroupState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _groupRepo = ref.watch(groupRepositoryProvider);
     _loadInitialData();
     return const BillerGroupState();
   }
@@ -108,9 +111,34 @@ class BillerGroupViewModel extends _$BillerGroupViewModel {
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Implement API call to search biller groups
-    await Future.delayed(const Duration(milliseconds: 500));
-    state = state.copyWith(billerGroups: [], isLoading: false);
+    final result = await _groupRepo.getGroups(groupType: 'biller');
+    result.fold(
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
+      (groups) {
+        final filtered = groups
+            .where((g) {
+              final matchesName =
+                  state.billerGroupName.isEmpty ||
+                  g.name.toLowerCase().contains(
+                    state.billerGroupName.toLowerCase(),
+                  );
+              return matchesName;
+            })
+            .map(
+              (g) => {
+                'id': g.id,
+                'name': g.name,
+                'permissions': g.permissions,
+                'isActive': g.isActive,
+                'memberCount': g.memberUserIds.length,
+                'groupType': g.groupType,
+              },
+            )
+            .toList();
+        state = state.copyWith(billerGroups: filtered, isLoading: false);
+      },
+    );
   }
 
   void showAll() {

@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/store_provider.dart';
+import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/report_repository.dart';
 import '../model/report_model.dart';
 
 part 'reports_viewmodel.g.dart';
@@ -81,18 +83,42 @@ class ReportsState {
 /// ViewModel for the Reports screen using Riverpod
 @riverpod
 class ReportsViewModel extends _$ReportsViewModel {
+  late ReportRepository _reportRepo;
+
   @override
   ReportsState build() {
+    _reportRepo = ref.watch(reportRepositoryProvider);
     // Watch the global store state
     final storeState = ref.watch(globalStoreNotifierProvider);
 
-    final defaultReports = ReportModel.getDefaultReports();
+    _loadReportTemplates();
 
     return ReportsState(
-      reports: defaultReports,
-      filteredReports: defaultReports,
       stores: storeState.stores,
       selectedStoreId: storeState.selectedStoreId,
+    );
+  }
+
+  Future<void> _loadReportTemplates() async {
+    state = state.copyWith(isLoading: true);
+    final result = await _reportRepo.getReportTemplates();
+    result.fold(
+      (failure) {
+        // Fallback to hardcoded defaults if API fails
+        final defaultReports = ReportModel.getDefaultReports();
+        state = state.copyWith(
+          reports: defaultReports,
+          filteredReports: defaultReports,
+          isLoading: false,
+        );
+      },
+      (templates) {
+        state = state.copyWith(
+          reports: templates,
+          filteredReports: templates,
+          isLoading: false,
+        );
+      },
     );
   }
 

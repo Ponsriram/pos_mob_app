@@ -7,7 +7,7 @@ part of 'online_store_logs_viewmodel.dart';
 // **************************************************************************
 
 String _$onlineStoreLogsViewModelHash() =>
-    r'be2af908943b489e5ebb2dfea952bfe46a1cb9d2';
+    r'405c27dc55442e9200053d68dd51d07a905781d9';
 
 /// ViewModel for Online Store Logs page
 ///

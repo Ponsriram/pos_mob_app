@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/group_repository.dart';
 
 part 'admin_group_viewmodel.g.dart';
 
@@ -62,10 +63,12 @@ class AdminGroupState {
 @riverpod
 class AdminGroupViewModel extends _$AdminGroupViewModel {
   late StoreRepository _storeRepo;
+  late GroupRepository _groupRepo;
 
   @override
   AdminGroupState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _groupRepo = ref.watch(groupRepositoryProvider);
     _loadInitialData();
     return const AdminGroupState();
   }
@@ -98,9 +101,31 @@ class AdminGroupViewModel extends _$AdminGroupViewModel {
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Implement API call to search admin groups
-    await Future.delayed(const Duration(milliseconds: 500));
-    state = state.copyWith(adminGroups: [], isLoading: false);
+    final result = await _groupRepo.getGroups(groupType: 'admin');
+    result.fold(
+      (failure) =>
+          state = state.copyWith(isLoading: false, error: failure.message),
+      (groups) {
+        final filtered = groups
+            .where((g) {
+              if (state.adminGroupName.isEmpty) return true;
+              return g.name.toLowerCase().contains(
+                state.adminGroupName.toLowerCase(),
+              );
+            })
+            .map(
+              (g) => {
+                'id': g.id,
+                'name': g.name,
+                'permissions': g.permissions,
+                'isActive': g.isActive,
+                'memberCount': g.memberUserIds.length,
+              },
+            )
+            .toList();
+        state = state.copyWith(adminGroups: filtered, isLoading: false);
+      },
+    );
   }
 
   void showAll() {

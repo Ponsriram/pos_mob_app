@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/integration_repository.dart';
 
 part 'online_store_logs_viewmodel.g.dart';
 
@@ -91,10 +92,12 @@ class OnlineStoreLogsState {
 @riverpod
 class OnlineStoreLogsViewModel extends _$OnlineStoreLogsViewModel {
   late StoreRepository _storeRepo;
+  late IntegrationRepository _integrationRepo;
 
   @override
   OnlineStoreLogsState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _integrationRepo = ref.watch(integrationRepositoryProvider);
     _loadInitialData();
     final now = DateTime.now();
     return OnlineStoreLogsState(fromDate: now, toDate: now);
@@ -159,10 +162,33 @@ class OnlineStoreLogsViewModel extends _$OnlineStoreLogsViewModel {
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Implement API call to search logs via repository
-    await Future.delayed(const Duration(milliseconds: 500));
+    final storeId = state.selectedStoreId;
+    if (storeId == null) {
+      state = state.copyWith(logs: [], isLoading: false);
+      return;
+    }
 
-    state = state.copyWith(logs: [], isLoading: false);
+    final result = await _integrationRepo.getStoreLogs(storeId);
+    result.fold(
+      (failure) =>
+          state = state.copyWith(error: failure.message, isLoading: false),
+      (logList) {
+        final logMaps = logList
+            .map(
+              (log) => {
+                'id': log.id,
+                'storeId': log.storeId,
+                'aggregatorId': log.aggregatorId,
+                'logType': log.logType,
+                'status': log.status,
+                'message': log.errorMessage ?? '',
+                'createdAt': log.createdAt.toIso8601String(),
+              },
+            )
+            .toList();
+        state = state.copyWith(logs: logMaps, isLoading: false);
+      },
+    );
   }
 
   void reset() {

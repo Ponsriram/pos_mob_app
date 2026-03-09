@@ -15,6 +15,9 @@ class StoreModel {
   final bool taxInclusive;
   final String? ownerId;
   final String? chainId;
+  final String? state;
+  final String? city;
+  final String? outletType;
   final bool isActive;
   final DateTime createdAt;
 
@@ -29,6 +32,9 @@ class StoreModel {
     this.taxInclusive = false,
     this.ownerId,
     this.chainId,
+    this.state,
+    this.city,
+    this.outletType,
     this.isActive = true,
     required this.createdAt,
   });
@@ -45,6 +51,9 @@ class StoreModel {
       taxInclusive: json['tax_inclusive'] as bool? ?? false,
       ownerId: json['owner_id']?.toString(),
       chainId: json['chain_id']?.toString(),
+      state: json['state'] as String?,
+      city: json['city'] as String?,
+      outletType: json['outlet_type'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
@@ -62,6 +71,9 @@ class StoreModel {
       'currency': currency,
       'tax_inclusive': taxInclusive,
       if (chainId != null) 'chain_id': chainId,
+      if (state != null) 'state': state,
+      if (city != null) 'city': city,
+      if (outletType != null) 'outlet_type': outletType,
     };
   }
 
@@ -75,6 +87,10 @@ abstract class StoreRepository {
   Future<Either<Failure, List<StoreModel>>> getAccessibleStores();
   Future<Either<Failure, StoreModel>> getStoreById(String id);
   Future<Either<Failure, StoreModel>> createStore(Map<String, dynamic> data);
+  Future<Either<Failure, StoreModel>> updateStore(
+    String id,
+    Map<String, dynamic> data,
+  );
 }
 
 /// REST API implementation of StoreRepository
@@ -125,6 +141,21 @@ class StoreRepositoryImpl implements StoreRepository {
       return left(apiFailure(e));
     } catch (e) {
       return left(Failure(message: 'Failed to create store: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, StoreModel>> updateStore(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _client.put('/stores/$id', data: data);
+      return right(StoreModel.fromJson(response.data as Map<String, dynamic>));
+    } on ApiException catch (e) {
+      return left(apiFailure(e));
+    } catch (e) {
+      return left(Failure(message: 'Failed to update store: $e'));
     }
   }
 }

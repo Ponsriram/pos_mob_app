@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/widgets/common_scaffold.dart';
+import '../../../../core/common/common_scaffold.dart';
 import '../../../../core/repositories/sales_report_repository.dart';
 import '../../viewmodel/sales_report_viewmodel.dart';
 import '../../model/sales_report_model.dart';

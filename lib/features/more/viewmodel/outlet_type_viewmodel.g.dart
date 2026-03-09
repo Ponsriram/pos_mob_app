@@ -7,7 +7,7 @@ part of 'outlet_type_viewmodel.dart';
 // **************************************************************************
 
 String _$outletTypeViewModelHash() =>
-    r'05a21e2f4d84cbb4b7a185431f561c6347c7ff2b';
+    r'6245ebafb30602d08142578179df59d29b658837';
 
 /// ViewModel for the Outlet Type screen using Riverpod
 ///

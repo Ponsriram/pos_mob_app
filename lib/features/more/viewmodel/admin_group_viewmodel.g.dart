@@ -7,7 +7,7 @@ part of 'admin_group_viewmodel.dart';
 // **************************************************************************
 
 String _$adminGroupViewModelHash() =>
-    r'c11e1675a5af9374a479e13b2ce2f244ab19f0ba';
+    r'd72b66dcb0a22fd3353bd885773bc48f6b7ea226';
 
 /// ViewModel for Admin Group Management page using Riverpod
 ///

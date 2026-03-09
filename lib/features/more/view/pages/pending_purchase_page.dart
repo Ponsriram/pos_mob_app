@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/widgets/common_scaffold.dart';
-import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/common/common_scaffold.dart';
+import '../../../../core/common/empty_state_widget.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../viewmodel/pending_purchase_viewmodel.dart';
 import '../widgets/pending_purchase_filter_section.dart';

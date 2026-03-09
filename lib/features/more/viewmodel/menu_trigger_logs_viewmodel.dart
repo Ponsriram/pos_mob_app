@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:pos_app/core/providers/repository_providers.dart';
 import 'package:pos_app/core/repositories/store_repository.dart';
+import 'package:pos_app/core/repositories/integration_repository.dart';
 
 part 'menu_trigger_logs_viewmodel.g.dart';
 
@@ -19,6 +20,7 @@ class MenuTriggerLogsState {
   final List<Map<String, dynamic>> logs;
   final bool isLoading;
   final String? error;
+  final List<String> thirdpartyUserList;
 
   const MenuTriggerLogsState({
     this.selectedStoreId,
@@ -34,6 +36,7 @@ class MenuTriggerLogsState {
     this.logs = const [],
     this.isLoading = false,
     this.error,
+    this.thirdpartyUserList = const ['Select Thirdparty User'],
   });
 
   List<String> get availableOutlets => [
@@ -61,17 +64,8 @@ class MenuTriggerLogsState {
     return store != null ? '${store.id} - ${store.name}' : 'Please Select';
   }
 
-  /// Available third party users
-  List<String> get thirdpartyUsers => const [
-    'Select Thirdparty User',
-    'Swiggy',
-    'PayTM',
-    'Ewards Online',
-    'Dineout Ordering',
-    'Dotpe',
-    'Dukaan',
-    'Menu QR',
-  ];
+  /// Available third party users fetched from backend
+  List<String> get thirdpartyUsers => thirdpartyUserList;
 
   /// Available statuses
   List<String> get statuses => const ['All', 'Success', 'Failed', 'In Process'];
@@ -90,6 +84,7 @@ class MenuTriggerLogsState {
     List<Map<String, dynamic>>? logs,
     bool? isLoading,
     String? error,
+    List<String>? thirdpartyUserList,
   }) {
     return MenuTriggerLogsState(
       selectedStoreId: selectedStoreId ?? this.selectedStoreId,
@@ -106,6 +101,7 @@ class MenuTriggerLogsState {
       logs: logs ?? this.logs,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      thirdpartyUserList: thirdpartyUserList ?? this.thirdpartyUserList,
     );
   }
 }
@@ -114,10 +110,12 @@ class MenuTriggerLogsState {
 @riverpod
 class MenuTriggerLogsViewModel extends _$MenuTriggerLogsViewModel {
   late StoreRepository _storeRepo;
+  late IntegrationRepository _integrationRepo;
 
   @override
   MenuTriggerLogsState build() {
     _storeRepo = ref.watch(storeRepositoryProvider);
+    _integrationRepo = ref.watch(integrationRepositoryProvider);
     _loadInitialData();
     return const MenuTriggerLogsState();
   }
@@ -130,6 +128,16 @@ class MenuTriggerLogsViewModel extends _$MenuTriggerLogsViewModel {
           state = state.copyWith(error: failure.message, isLoading: false),
       (stores) => state = state.copyWith(stores: stores, isLoading: false),
     );
+
+    // Load aggregators for thirdparty user dropdown
+    final aggResult = await _integrationRepo.getAggregators();
+    aggResult.fold((failure) => {}, (aggregators) {
+      final names = [
+        'Select Thirdparty User',
+        ...aggregators.map((a) => a.name),
+      ];
+      state = state.copyWith(thirdpartyUserList: names);
+    });
   }
 
   void setSelectedOutlet(String outletName) {
@@ -182,10 +190,36 @@ class MenuTriggerLogsViewModel extends _$MenuTriggerLogsViewModel {
   Future<void> search() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Implement API call to search logs via repository
-    await Future.delayed(const Duration(milliseconds: 500));
+    final storeId = state.selectedRestaurantId ?? state.selectedStoreId;
+    if (storeId == null) {
+      state = state.copyWith(logs: [], isLoading: false);
+      return;
+    }
 
-    state = state.copyWith(logs: [], isLoading: false);
+    final result = await _integrationRepo.getMenuTriggerLogs(storeId);
+    result.fold(
+      (failure) => state = state.copyWith(
+        logs: [],
+        isLoading: false,
+        error: failure.message,
+      ),
+      (logEntries) {
+        final logMaps = logEntries
+            .map(
+              (l) => {
+                'id': l.id,
+                'storeId': l.storeId,
+                'aggregatorId': l.aggregatorId,
+                'logType': l.logType,
+                'status': l.status,
+                'message': l.errorMessage ?? '',
+                'createdAt': l.createdAt.toIso8601String(),
+              },
+            )
+            .toList();
+        state = state.copyWith(logs: logMaps, isLoading: false);
+      },
+    );
   }
 
   void reset() {

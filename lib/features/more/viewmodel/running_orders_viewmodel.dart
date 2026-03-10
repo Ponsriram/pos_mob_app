@@ -65,16 +65,25 @@ class RunningOrdersState {
   /// Order categories for running orders screen
   List<OrderCategoryModel> get orderCategories {
     final dineInOrders = runningOrders
-        .where((o) => o.platform == OrderPlatform.dineIn)
+        .where((o) => o.orderType == 'dine_in')
         .toList();
     final pickUpOrders = runningOrders
-        .where((o) => o.platform == OrderPlatform.takeaway)
+        .where((o) => o.orderType == 'takeaway')
         .toList();
+    // Delivery includes direct delivery + online platform orders
     final deliveryOrders = runningOrders
-        .where((o) => o.platform == OrderPlatform.delivery)
+        .where(
+          (o) =>
+              o.orderType == 'delivery' ||
+              OrderPlatformExtension.isOnlinePlatform(o.channel),
+        )
         .toList();
     final pendingOrders = runningOrders
-        .where((o) => o.status == OrderStatus.pending)
+        .where(
+          (o) =>
+              o.status == OrderStatus.pending ||
+              o.status == OrderStatus.confirmed,
+        )
         .toList();
     final preparingOrders = runningOrders
         .where((o) => o.status == OrderStatus.preparing)

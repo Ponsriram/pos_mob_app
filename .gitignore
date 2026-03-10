@@ -59,24 +59,11 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 .env.*.local
 *.env
 
-# Configuration files with secrets (use .env instead)
-lib/core/config/supabase_config.dart
-lib/core/config/google_auth_config.dart
-
-# Firebase configuration (contains API keys)
-google-services.json
-GoogleService-Info.plist
-firebase_options.dart
-lib/firebase_options.dart
-
 # Keystore and signing
 *.jks
 *.keystore
 key.properties
 android/key.properties
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
-ios/firebase_app_id_file.json
 
 # Local configuration
 local.properties

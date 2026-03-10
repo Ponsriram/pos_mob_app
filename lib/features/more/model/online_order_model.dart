@@ -31,7 +31,7 @@ class OrderPlatformModel {
       name: 'Uber Eats',
       icon: Icons.directions_car,
     ),
-    OrderPlatformModel(id: 'dunzo', name: 'Dunzo', icon: Icons.local_shipping),
+   
     OrderPlatformModel(
       id: 'dine_in',
       name: 'Dine In',

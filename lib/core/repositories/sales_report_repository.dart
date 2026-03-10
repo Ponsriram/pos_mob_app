@@ -117,7 +117,7 @@ class SalesReportRepositoryImpl implements SalesReportRepository {
       final startStr = startDate.toIso8601String().split('T')[0];
       final endStr = endDate.toIso8601String().split('T')[0];
 
-      final response = await _client.get(
+      final data = await _client.get(
         '/analytics/summary',
         queryParameters: {
           'store_id': storeId,
@@ -126,12 +126,12 @@ class SalesReportRepositoryImpl implements SalesReportRepository {
         },
       );
 
-      if (response.data == null) {
+      if (data == null) {
         return right([]);
       }
 
       final report = SalesReportData.fromAnalyticsSummary(
-        response.data as Map<String, dynamic>,
+        data as Map<String, dynamic>,
         storeId: storeId,
         storeName: storeName,
       );

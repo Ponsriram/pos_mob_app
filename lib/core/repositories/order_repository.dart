@@ -316,11 +316,8 @@ class OrderRepositoryImpl implements OrderRepository {
         queryParams['channel'] = channel;
       }
 
-      final response = await _client.get(
-        '/orders',
-        queryParameters: queryParams,
-      );
-      final orders = (response.data as List)
+      final data = await _client.get('/orders', queryParameters: queryParams);
+      final orders = (data as List)
           .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return right(orders);
@@ -349,8 +346,8 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<Either<Failure, OrderModel>> getOrderById(String id) async {
     try {
-      final response = await _client.get('/orders/$id');
-      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+      final data = await _client.get('/orders/$id');
+      return right(OrderModel.fromJson(data as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {
@@ -363,8 +360,8 @@ class OrderRepositoryImpl implements OrderRepository {
     required Map<String, dynamic> orderData,
   }) async {
     try {
-      final response = await _client.post('/orders', data: orderData);
-      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+      final result = await _client.post('/orders', data: orderData);
+      return right(OrderModel.fromJson(result as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {
@@ -381,11 +378,11 @@ class OrderRepositoryImpl implements OrderRepository {
       final statusStr = status is OrderStatus
           ? status.value
           : status.toString();
-      final response = await _client.put(
+      final result = await _client.put(
         '/orders/$orderId/status',
         data: {'status': statusStr},
       );
-      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+      return right(OrderModel.fromJson(result as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {
@@ -399,11 +396,11 @@ class OrderRepositoryImpl implements OrderRepository {
     required String reason,
   }) async {
     try {
-      final response = await _client.put(
+      final result = await _client.put(
         '/orders/$orderId/cancel',
         data: {'reason': reason},
       );
-      return right(OrderModel.fromJson(response.data as Map<String, dynamic>));
+      return right(OrderModel.fromJson(result as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {

@@ -113,18 +113,16 @@ class DashboardRepositoryImpl implements DashboardRepository {
         queryParams['store_id'] = storeId;
       }
 
-      final response = await _client.get(
+      final data = await _client.get(
         '/analytics/summary',
         queryParameters: queryParams,
       );
 
-      if (response.data == null) {
+      if (data == null) {
         return right(DashboardStats.empty);
       }
 
-      return right(
-        DashboardStats.fromJson(response.data as Map<String, dynamic>),
-      );
+      return right(DashboardStats.fromJson(data as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {

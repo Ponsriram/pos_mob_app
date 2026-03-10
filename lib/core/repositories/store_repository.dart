@@ -102,8 +102,8 @@ class StoreRepositoryImpl implements StoreRepository {
   @override
   Future<Either<Failure, List<StoreModel>>> getStores() async {
     try {
-      final response = await _client.get('/stores');
-      final stores = (response.data as List)
+      final data = await _client.get('/stores');
+      final stores = (data as List)
           .map((e) => StoreModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return right(stores);
@@ -117,8 +117,8 @@ class StoreRepositoryImpl implements StoreRepository {
   @override
   Future<Either<Failure, StoreModel>> getStoreById(String id) async {
     try {
-      final response = await _client.get('/stores/$id');
-      return right(StoreModel.fromJson(response.data as Map<String, dynamic>));
+      final data = await _client.get('/stores/$id');
+      return right(StoreModel.fromJson(data as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {
@@ -136,7 +136,7 @@ class StoreRepositoryImpl implements StoreRepository {
   ) async {
     try {
       final response = await _client.post('/stores', data: data);
-      return right(StoreModel.fromJson(response.data as Map<String, dynamic>));
+      return right(StoreModel.fromJson(response as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {
@@ -151,7 +151,7 @@ class StoreRepositoryImpl implements StoreRepository {
   ) async {
     try {
       final response = await _client.put('/stores/$id', data: data);
-      return right(StoreModel.fromJson(response.data as Map<String, dynamic>));
+      return right(StoreModel.fromJson(response as Map<String, dynamic>));
     } on ApiException catch (e) {
       return left(apiFailure(e));
     } catch (e) {

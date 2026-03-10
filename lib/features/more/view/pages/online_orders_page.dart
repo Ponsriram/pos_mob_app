@@ -60,25 +60,38 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
         : null;
 
     // Convert orders to OnlineOrderModel for widget compatibility
-    final onlineOrders = viewModel.orders
-        .map(
-          (order) => OnlineOrderModel(
-            orderNo: order.orderNumber ?? '',
-            outletName:
-                viewModel.stores
-                    .where((s) => s.id == order.storeId)
-                    .firstOrNull
-                    ?.name ??
-                'Unknown',
-            orderFrom: order.channel,
-            orderType: order.channel,
-            customerName: 'Guest',
-            dateTime: order.createdAt,
-            total: order.netAmount,
-            status: _mapOrderStatus(order.status),
-          ),
-        )
-        .toList();
+    final onlineOrders = viewModel.orders.map((order) {
+      // Resolve store name from ID
+      final storeName =
+          viewModel.stores
+              .where((s) => s.id == order.storeId)
+              .firstOrNull
+              ?.name ??
+          'Unknown';
+
+      // Resolve channel to display name
+      final platformDisplay = repo.OrderPlatformExtension.fromString(
+        order.channel,
+      ).displayName;
+
+      // Resolve order type to display name
+      final orderTypeDisplay = repo.OrderPlatformExtension.fromString(
+        order.orderType,
+      ).displayName;
+
+      return OnlineOrderModel(
+        orderNo: order.orderNumber ?? '',
+        outletName: storeName,
+        orderFrom: platformDisplay,
+        orderType: orderTypeDisplay,
+        customerName: order.guestId != null
+            ? 'Guest #${order.guestId!.substring(0, 8)}'
+            : 'Walk-in',
+        dateTime: order.createdAt,
+        total: order.netAmount,
+        status: _mapOrderStatus(order.status),
+      );
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

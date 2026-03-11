@@ -31,7 +31,7 @@ class OrderPlatformModel {
       name: 'Uber Eats',
       icon: Icons.directions_car,
     ),
-   
+
     OrderPlatformModel(
       id: 'dine_in',
       name: 'Dine In',
@@ -83,7 +83,7 @@ class RestaurantModel {
 
   const RestaurantModel({required this.id, required this.name});
 
-  String get displayName => '$id - $name';
+  String get displayName => '$name';
 }
 
 /// Model for online order record

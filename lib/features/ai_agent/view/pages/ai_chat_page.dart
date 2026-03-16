@@ -1,19 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_app/features/ai_agent/viewmodel/ai_agent_viewmodel.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:pos_app/features/ai_agent/model/chat_message_model.dart';
 import 'package:pos_app/features/ai_agent/view/widgets/chat_bubble.dart';
 import 'package:pos_app/features/ai_agent/view/widgets/chat_input.dart';
 
 /// Main page for the AI chat assistant
-class AiChatPage extends ConsumerStatefulWidget {
+class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
 
   @override
-  ConsumerState<AiChatPage> createState() => _AiChatPageState();
+  State<AiChatPage> createState() => _AiChatPageState();
 }
 
-class _AiChatPageState extends ConsumerState<AiChatPage> {
+class _AiChatPageState extends State<AiChatPage> {
   final ScrollController _scrollController = ScrollController();
+  final List<ChatMessage> _messages = [];
+  bool _isTyping = false;
 
   @override
   void dispose() {
@@ -33,19 +34,38 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(aiAgentViewModelProvider);
-    final colorScheme = Theme.of(context).colorScheme;
+  void _sendMessage(String text) {
+    if (text.trim().isEmpty) return;
+    setState(() {
+      _messages.add(ChatMessage(content: text, isUser: true));
+      _isTyping = true;
+    });
+    _scrollToBottom();
 
-    // Scroll to bottom when new messages arrive
-    ref.listen(aiAgentViewModelProvider, (previous, next) {
-      final prevCount = previous?.value?.messages.length ?? 0;
-      final nextCount = next.value?.messages.length ?? 0;
-      if (nextCount > prevCount) {
+    // Simulate a no-op assistant reply
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add(
+            ChatMessage(
+              content: 'This is a placeholder response.',
+              isUser: false,
+            ),
+          );
+        });
         _scrollToBottom();
       }
     });
+  }
+
+  void _clearChat() {
+    setState(() => _messages.clear());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -72,7 +92,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  state.value?.isTyping == true ? 'Typing...' : 'Online',
+                  _isTyping ? 'Typing...' : 'Online',
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -84,7 +104,6 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           ],
         ),
         actions: [
-          // Clear chat button
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
@@ -109,94 +128,72 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       ),
       body: Column(
         children: [
-          // Chat messages
           Expanded(
-            child: state.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Something went wrong',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
+            child: _messages.isEmpty && !_isTyping
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 64,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: colorScheme.onSurfaceVariant),
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: () =>
-                            ref.invalidate(aiAgentViewModelProvider),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              data: (data) => Column(
-                children: [
-                  // Quick suggestions (show only when few messages)
-                  if (data.messages.length <= 2 && !data.isTyping) ...[
-                    const SizedBox(height: 8),
-                    QuickSuggestions(
-                      onSuggestionTap: (suggestion) {
-                        ref
-                            .read(aiAgentViewModelProvider.notifier)
-                            .sendMessage(suggestion);
-                      },
-                      enabled: !data.isTyping,
+                        const SizedBox(height: 16),
+                        Text(
+                          'Start a conversation',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // Messages list
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 16,
-                      ),
-                      itemCount: data.messages.length + (data.isTyping ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        // Show typing indicator at the end
-                        if (data.isTyping && index == data.messages.length) {
-                          return const TypingIndicator();
-                        }
-
-                        return ChatBubble(message: data.messages[index]);
-                      },
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 16,
                     ),
+                    itemCount: _messages.length + (_isTyping ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (_isTyping && index == _messages.length) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHigh,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const SizedBox(
+                                  width: 40,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return ChatBubble(message: _messages[index]);
+                    },
                   ),
-                ],
-              ),
-            ),
           ),
-
-          // Input field
-          ChatInput(
-            onSend: (message) {
-              ref.read(aiAgentViewModelProvider.notifier).sendMessage(message);
-            },
-            enabled: !(state.value?.isTyping ?? false),
-          ),
+          ChatInput(onSend: _sendMessage, enabled: !_isTyping),
         ],
       ),
     );
@@ -217,7 +214,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           ),
           FilledButton(
             onPressed: () {
-              ref.read(aiAgentViewModelProvider.notifier).clearChat();
+              _clearChat();
               Navigator.pop(context);
             },
             child: const Text('Clear'),

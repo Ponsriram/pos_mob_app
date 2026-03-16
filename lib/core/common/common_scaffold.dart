@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter/material.dart';
 import '../../features/dashboard/model/drawer_menu_item_model.dart';
 import '../../features/dashboard/view/widgets/dashboard_drawer.dart';
 import 'common_app_bar.dart';
@@ -8,7 +7,7 @@ import 'show_outlet_picker.dart';
 
 /// A common scaffold widget that includes the app bar and drawer
 /// used across multiple pages in the app.
-class CommonScaffold extends ConsumerStatefulWidget {
+class CommonScaffold extends StatefulWidget {
   /// The unique identifier for the current page (used to highlight active drawer item)
   final String activeItemId;
 
@@ -54,10 +53,10 @@ class CommonScaffold extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CommonScaffold> createState() => _CommonScaffoldState();
+  State<CommonScaffold> createState() => _CommonScaffoldState();
 }
 
-class _CommonScaffoldState extends ConsumerState<CommonScaffold> {
+class _CommonScaffoldState extends State<CommonScaffold> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -95,7 +94,6 @@ class _CommonScaffoldState extends ConsumerState<CommonScaffold> {
             context,
             currentItemId: widget.activeItemId,
             targetItemId: itemId,
-            ref: ref,
           );
         }
       },

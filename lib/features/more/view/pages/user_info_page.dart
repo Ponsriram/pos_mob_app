@@ -1,44 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/user_info_viewmodel.dart';
-import '../widgets/edit_profile/edit_user_info_dialog.dart';
+import '../../model/user_info_model.dart';
 import '../widgets/edit_profile/user_logs_dialog.dart';
 
 /// User Info page displaying user profile information
-class UserInfoPage extends ConsumerStatefulWidget {
+class UserInfoPage extends StatefulWidget {
   const UserInfoPage({super.key});
 
   @override
-  ConsumerState<UserInfoPage> createState() => _UserInfoPageState();
+  State<UserInfoPage> createState() => _UserInfoPageState();
 }
 
-class _UserInfoPageState extends ConsumerState<UserInfoPage> {
+class _UserInfoPageState extends State<UserInfoPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final state = ref.watch(userInfoViewModelProvider);
-
-    // Listen for errors to show snackbar
-    ref.listen(userInfoViewModelProvider, (prev, next) {
-      if (next.error != null && prev?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: colorScheme.error,
-          ),
-        );
-        ref.read(userInfoViewModelProvider.notifier).clearError();
-      }
-    });
 
     return CommonScaffold(
       activeItemId: 'user_info',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(userInfoViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -145,8 +127,7 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
   }
 
   Widget _buildUserInfoSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(userInfoViewModelProvider);
-    final userInfo = state.userInfo;
+    const UserInfoModel? userInfo = null;
 
     if (userInfo == null) {
       return const Center(child: Text('Loading user info...'));
@@ -206,8 +187,7 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
   }
 
   Widget _build2FASection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(userInfoViewModelProvider);
-    final userInfo = state.userInfo;
+    const UserInfoModel? userInfo = null;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -224,8 +204,7 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
             scale: 0.9,
             child: Switch(
               value: userInfo?.is2FAEnabled ?? false,
-              onChanged: (value) =>
-                  ref.read(userInfoViewModelProvider.notifier).toggle2FA(value),
+              onChanged: (_) {},
               activeTrackColor: colorScheme.primary,
               activeThumbColor: colorScheme.onPrimary,
             ),
@@ -325,44 +304,17 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
   }
 
   void _showLogsDialog() {
-    final state = ref.read(userInfoViewModelProvider);
-    showUserLogsDialog(context: context, logs: state.logs, isLoading: false);
+    showUserLogsDialog(
+      context: context,
+      logs: const <UserLogEntry>[],
+      isLoading: false,
+    );
   }
 
   void _showEditDialog() {
-    final state = ref.read(userInfoViewModelProvider);
-    final userInfo = state.userInfo;
-
-    if (userInfo == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('User info not loaded yet')));
-      return;
-    }
-
-    showEditUserInfoDialog(
-      context: context,
-      userInfo: userInfo,
-      onSave: (name, email, mobileNumbers) {
-        ref
-            .read(userInfoViewModelProvider.notifier)
-            .updateUserInfo(
-              name: name,
-              email: email,
-              mobileNumbers: mobileNumbers,
-            );
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User info updated successfully')),
-        );
-      },
-      onChangeEmail: () {
-        // TODO: Implement change email flow
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Change email feature coming soon')),
-        );
-      },
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('User info not available')));
   }
 
   void _showChangePasswordDialog() {
@@ -448,12 +400,7 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
                   return;
                 }
 
-                ref
-                    .read(userInfoViewModelProvider.notifier)
-                    .changePassword(
-                      currentPasswordController.text,
-                      newPasswordController.text,
-                    );
+                () {}();
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(

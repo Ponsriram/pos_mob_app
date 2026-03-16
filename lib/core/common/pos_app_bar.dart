@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/theme_provider.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Reusable app bar widget for the POS app
-class PosAppBar extends ConsumerWidget implements PreferredSizeWidget {
+class PosAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String selectedOutlet;
   final VoidCallback? onMenuTap;
   final VoidCallback? onOutletTap;
@@ -33,9 +31,8 @@ class PosAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final themeNotifier = ref.read(themeModeNotifierProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AppBar(
@@ -52,7 +49,7 @@ class PosAppBar extends ConsumerWidget implements PreferredSizeWidget {
           ? _buildOutletSelector(context, colorScheme)
           : null,
       titleSpacing: 0,
-      actions: _buildActions(context, colorScheme, themeNotifier, isDark),
+      actions: _buildActions(context, colorScheme, isDark),
     );
   }
 
@@ -96,7 +93,6 @@ class PosAppBar extends ConsumerWidget implements PreferredSizeWidget {
   List<Widget> _buildActions(
     BuildContext context,
     ColorScheme colorScheme,
-    dynamic themeNotifier,
     bool isDark,
   ) {
     final List<Widget> actions = [];
@@ -105,13 +101,11 @@ class PosAppBar extends ConsumerWidget implements PreferredSizeWidget {
       actions.add(
         IconButton(
           onPressed: () {
-            themeNotifier.toggleTheme();
+            // Theme toggle is a no-op without a state management layer
           },
           icon: Icon(
             isDark ? Icons.light_mode : Icons.dark_mode,
-            color: isDark
-                ? const Color(0xFFFFC107)
-                : colorScheme.onSurfaceVariant,
+            color: isDark ? const Color(0xFFFFC107) : colorScheme.onSurfaceVariant,
           ),
         ),
       );

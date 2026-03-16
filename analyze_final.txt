@@ -1,0 +1,52 @@
+﻿Analyzing pos_mob_app...                                        
+
+   info - Dangling library doc comment - lib\core\models\dashboard_models.dart:1:1 - dangling_library_doc_comments
+   info - Unnecessary use of string interpolation - lib\features\more\model\online_order_model.dart:86:29 - unnecessary_string_interpolations
+warning - Dead code - lib\features\more\view\pages\admin_group_page.dart:167:25 - dead_code
+warning - Dead code - lib\features\more\view\pages\admin_group_page.dart:176:20 - dead_code
+warning - Dead code - lib\features\more\view\pages\admin_group_page.dart:283:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\admin_group_page.dart:297:5 - dead_code
+warning - Dead code - lib\features\more\view\pages\biller_group_page.dart:164:27 - dead_code
+warning - Dead code - lib\features\more\view\pages\biller_group_page.dart:174:11 - dead_code
+warning - Dead code - lib\features\more\view\pages\biller_group_page.dart:361:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\cloud_access_page.dart:232:27 - dead_code
+warning - Dead code - lib\features\more\view\pages\cloud_access_page.dart:242:11 - dead_code
+warning - Dead code - lib\features\more\view\pages\cloud_access_page.dart:485:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\create_zone_page.dart:111:13 - dead_code
+warning - Dead code - lib\features\more\view\pages\create_zone_page.dart:681:13 - dead_code
+   info - The type of the right operand ('int') isn't a subtype or a supertype of the left operand ('String') - lib\features\more\view\pages\item_out_of_stock_page.dart:195:28 - unrelated_type_equality_checks
+   info - The type of the right operand ('int') isn't a subtype or a supertype of the left operand ('String') - lib\features\more\view\pages\item_out_of_stock_page.dart:203:28 - unrelated_type_equality_checks
+warning - Dead code - lib\features\more\view\pages\item_out_of_stock_page.dart:548:44 - dead_code
+warning - Dead code - lib\features\more\view\pages\item_out_of_stock_page.dart:550:44 - dead_code
+warning - Dead code - lib\features\more\view\pages\item_out_of_stock_page.dart:553:42 - dead_code
+warning - Dead code - lib\features\more\view\pages\item_out_of_stock_page.dart:556:40 - dead_code
+   info - The type of the right operand ('int') isn't a subtype or a supertype of the left operand ('String') - lib\features\more\view\pages\item_out_of_stock_page.dart:597:28 - unrelated_type_equality_checks
+   info - The type of the right operand ('int') isn't a subtype or a supertype of the left operand ('String') - lib\features\more\view\pages\item_out_of_stock_page.dart:604:28 - unrelated_type_equality_checks
+warning - Dead code - lib\features\more\view\pages\menu_trigger_logs_page.dart:154:27 - dead_code
+warning - Dead code - lib\features\more\view\pages\menu_trigger_logs_page.dart:164:11 - dead_code
+warning - Dead code - lib\features\more\view\pages\menu_trigger_logs_page.dart:542:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_item_logs_page.dart:177:27 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_item_logs_page.dart:187:11 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_item_logs_page.dart:570:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_store_logs_page.dart:167:25 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_store_logs_page.dart:176:20 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_store_logs_page.dart:523:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\online_store_logs_page.dart:537:5 - dead_code
+warning - The declaration '_buildOutletRow' isn't referenced - lib\features\more\view\pages\outlet_type_page.dart:174:10 - unused_element
+warning - Dead code - lib\features\more\view\pages\pending_purchase_page.dart:104:16 - dead_code
+warning - Dead code - lib\features\more\view\pages\pending_purchase_page.dart:108:16 - dead_code
+   info - Missing type annotation - lib\features\more\view\pages\reports_page.dart:313:5 - strict_top_level_inference
+warning - Dead code - lib\features\more\view\pages\running_orders_page.dart:83:46 - dead_code
+warning - The declaration '_buildRunningTablesList' isn't referenced - lib\features\more\view\pages\running_orders_page.dart:131:10 - unused_element
+warning - Dead code - lib\features\more\view\pages\running_orders_page.dart:136:16 - dead_code
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\more\view\pages\sales_report_detail_page.dart:201:13 - use_build_context_synchronously
+warning - The declaration '_buildSummaryRow' isn't referenced - lib\features\more\view\pages\sales_report_detail_page.dart:607:10 - unused_element
+
+flutter : 41 issues found. (ran in 3.4s)
+At line:1 char:1
++ flutter analyze 2>&1 | Out-File "analyze_final.txt" -Encoding UTF8; G ...
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (41 issues found. (ran in 3.4s):St 
+   ring) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

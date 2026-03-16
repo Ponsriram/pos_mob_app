@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/admin_group_viewmodel.dart';
 
 /// Admin Group Management page
-class AdminGroupPage extends ConsumerStatefulWidget {
+class AdminGroupPage extends StatefulWidget {
   const AdminGroupPage({super.key});
 
   @override
-  ConsumerState<AdminGroupPage> createState() => _AdminGroupPageState();
+  State<AdminGroupPage> createState() => _AdminGroupPageState();
 }
 
-class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
+class _AdminGroupPageState extends State<AdminGroupPage> {
   late final TextEditingController _adminGroupNameController;
 
   @override
@@ -29,15 +27,12 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final state = ref.watch(adminGroupViewModelProvider);
 
     return CommonScaffold(
       activeItemId: 'admin_group',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(adminGroupViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -133,15 +128,11 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(adminGroupViewModelProvider);
-
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: ref
-              .read(adminGroupViewModelProvider.notifier)
-              .toggleSearchExpanded,
+          onTap: () {},
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -171,9 +162,7 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  state.isSearchExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                  Icons.keyboard_arrow_up,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -181,14 +170,12 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (state.isSearchExpanded) _buildSearchForm(colorScheme, textTheme),
+        _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
-    final notifier = ref.read(adminGroupViewModelProvider.notifier);
-
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -205,7 +192,7 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _adminGroupNameController,
-            onChanged: notifier.setAdminGroupName,
+            onChanged: (_) {},
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -236,7 +223,7 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  notifier.search();
+                  () {}();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -261,7 +248,7 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
               OutlinedButton(
                 onPressed: () {
                   _adminGroupNameController.clear();
-                  notifier.showAll();
+                  () {}();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -289,23 +276,7 @@ class _AdminGroupPageState extends ConsumerState<AdminGroupPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(adminGroupViewModelProvider);
-
-    if (state.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: colorScheme.primary),
-        ),
-      );
-    }
-
-    if (state.adminGroups.isEmpty) {
-      return _buildEmptyState(colorScheme, textTheme);
-    }
-
-    // TODO: Build list of admin groups
-    return const SizedBox.shrink();
+    return _buildEmptyState(colorScheme, textTheme);
   }
 
   Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {

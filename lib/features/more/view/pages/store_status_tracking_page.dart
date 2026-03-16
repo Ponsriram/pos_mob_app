@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/store_status_tracking_viewmodel.dart';
 
 /// Store Status Tracking Dashboard page
-class StoreStatusTrackingPage extends ConsumerWidget {
+class StoreStatusTrackingPage extends StatelessWidget {
   const StoreStatusTrackingPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final state = ref.watch(storeStatusTrackingViewModelProvider);
 
     return CommonScaffold(
       activeItemId: 'store_status',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(storeStatusTrackingViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _StoreStatusTrackingBody(),
@@ -26,14 +21,14 @@ class StoreStatusTrackingPage extends ConsumerWidget {
   }
 }
 
-class _StoreStatusTrackingBody extends ConsumerStatefulWidget {
+class _StoreStatusTrackingBody extends StatefulWidget {
   @override
-  ConsumerState<_StoreStatusTrackingBody> createState() =>
+  State<_StoreStatusTrackingBody> createState() =>
       _StoreStatusTrackingBodyState();
 }
 
 class _StoreStatusTrackingBodyState
-    extends ConsumerState<_StoreStatusTrackingBody> {
+    extends State<_StoreStatusTrackingBody> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -183,9 +178,6 @@ class _StoreStatusTrackingBodyState
   }
 
   Widget _buildFiltersSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(storeStatusTrackingViewModelProvider);
-    final notifier = ref.read(storeStatusTrackingViewModelProvider.notifier);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -194,7 +186,7 @@ class _StoreStatusTrackingBodyState
           // Choose restaurant
           _buildFilterDropdown(
             label: 'Choose restaurant',
-            value: state.selectedRestaurant,
+            value: '',
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
@@ -205,7 +197,7 @@ class _StoreStatusTrackingBodyState
           // Aggregator
           _buildFilterDropdown(
             label: 'Aggregator',
-            value: state.selectedAggregator,
+            value: '',
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
@@ -216,7 +208,7 @@ class _StoreStatusTrackingBodyState
           // Brand Name
           _buildFilterDropdown(
             label: 'Brand Name',
-            value: state.selectedBrand,
+            value: '',
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
@@ -227,7 +219,7 @@ class _StoreStatusTrackingBodyState
           // Store(s) Off for more than
           _buildFilterDropdown(
             label: 'Store(s) Off for more than',
-            value: state.selectedOfflineDuration,
+            value: '',
             colorScheme: colorScheme,
             textTheme: textTheme,
             onTap: () {
@@ -265,10 +257,10 @@ class _StoreStatusTrackingBodyState
                 child: OutlinedButton(
                   onPressed: () {
                     // Handle reset via viewmodel
-                    notifier.setSelectedRestaurant('All');
-                    notifier.setSelectedAggregator('Select');
-                    notifier.setSelectedBrand('All');
-                    notifier.setSelectedOfflineDuration('Select');
+                    () {}();
+                    () {}();
+                    () {}();
+                    () {}();
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colorScheme.onSurface,
@@ -372,9 +364,7 @@ class _StoreStatusTrackingBodyState
   }
 
   Widget _buildTabSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(storeStatusTrackingViewModelProvider);
-    final notifier = ref.read(storeStatusTrackingViewModelProvider.notifier);
-    final selectedTabIndex = state.selectedTabIndex;
+    final selectedTabIndex = null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -383,7 +373,7 @@ class _StoreStatusTrackingBodyState
           Expanded(
             child: GestureDetector(
               onTap: () {
-                notifier.setSelectedTabIndex(0);
+                () {}();
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -418,7 +408,7 @@ class _StoreStatusTrackingBodyState
           Expanded(
             child: GestureDetector(
               onTap: () {
-                notifier.setSelectedTabIndex(1);
+                () {}();
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -487,3 +477,4 @@ class _StoreStatusTrackingBodyState
     );
   }
 }
+

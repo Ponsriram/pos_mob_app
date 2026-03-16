@@ -83,7 +83,7 @@ class RestaurantModel {
 
   const RestaurantModel({required this.id, required this.name});
 
-  String get displayName => '$name';
+  String get displayName => name;
 }
 
 /// Model for online order record

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../../../core/repositories/order_repository.dart' as repo;
-import '../../viewmodel/online_orders_viewmodel.dart';
 import '../../model/online_order_model.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import '../../../dashboard/view/widgets/platform_tab_bar.dart';
@@ -11,25 +8,22 @@ import '../widgets/online_orders_filter_section.dart';
 import '../widgets/online_orders_data_table.dart';
 
 /// Online Orders Activity page
-class OnlineOrdersPage extends ConsumerStatefulWidget {
+class OnlineOrdersPage extends StatefulWidget {
   const OnlineOrdersPage({super.key});
 
   @override
-  ConsumerState<OnlineOrdersPage> createState() => _OnlineOrdersPageState();
+  State<OnlineOrdersPage> createState() => _OnlineOrdersPageState();
 }
 
-class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
+class _OnlineOrdersPageState extends State<OnlineOrdersPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final viewModel = ref.watch(onlineOrdersViewModelProvider);
-    final viewModelNotifier = ref.read(onlineOrdersViewModelProvider.notifier);
-
     return CommonScaffold(
       activeItemId: 'online_orders',
-      selectedOutlet: viewModel.selectedOutlet,
-      availableOutlets: viewModel.availableOutlets,
-      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -44,54 +38,9 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
   Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final viewModel = ref.watch(onlineOrdersViewModelProvider);
-    final viewModelNotifier = ref.read(onlineOrdersViewModelProvider.notifier);
-
-    // Convert stores to RestaurantModel for widget compatibility
-    final restaurantModels = viewModel.stores
-        .map((store) => RestaurantModel(id: store.id, name: store.name))
-        .toList();
-
-    // Find selected restaurant model
-    final selectedRestaurantModel = viewModel.selectedStoreId != null
-        ? restaurantModels
-              .where((r) => r.id == viewModel.selectedStoreId)
-              .firstOrNull
-        : null;
-
-    // Convert orders to OnlineOrderModel for widget compatibility
-    final onlineOrders = viewModel.orders.map((order) {
-      // Resolve store name from ID
-      final storeName =
-          viewModel.stores
-              .where((s) => s.id == order.storeId)
-              .firstOrNull
-              ?.name ??
-          'Unknown';
-
-      // Resolve channel to display name
-      final platformDisplay = repo.OrderPlatformExtension.fromString(
-        order.channel,
-      ).displayName;
-
-      // Resolve order type to display name
-      final orderTypeDisplay = repo.OrderPlatformExtension.fromString(
-        order.orderType,
-      ).displayName;
-
-      return OnlineOrderModel(
-        orderNo: order.orderNumber ?? '',
-        outletName: storeName,
-        orderFrom: platformDisplay,
-        orderType: orderTypeDisplay,
-        customerName: order.guestId != null
-            ? 'Guest #${order.guestId!.substring(0, 8)}'
-            : 'Walk-in',
-        dateTime: order.createdAt,
-        total: order.netAmount,
-        status: _mapOrderStatus(order.status),
-      );
-    }).toList();
+    const List<RestaurantModel> restaurantModels = [];
+    const RestaurantModel? selectedRestaurantModel = null;
+    const List<OnlineOrderModel> onlineOrders = [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,48 +59,35 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
                   _buildSectionHeader(colorScheme, textTheme),
                   // Platform tabs
                   PlatformTabBar(
-                    platforms: viewModel.platforms,
-                    selectedPlatformId: viewModel.selectedPlatformId,
-                    onPlatformChanged: viewModelNotifier.setSelectedPlatform,
+                    platforms: const [],
+                    selectedPlatformId: 'all',
+                    onPlatformChanged: (_) {},
                   ),
                   // Chart section
-                  OrdersChartSection(
-                    isExpanded: viewModel.isChartExpanded,
-                    onToggle: viewModelNotifier.toggleChartExpansion,
-                  ),
+                  OrdersChartSection(isExpanded: false, onToggle: () {}),
                   // Filters section
                   OnlineOrdersFilterSection(
                     restaurants: restaurantModels,
                     selectedRestaurant: selectedRestaurantModel,
-                    selectedRecordType: viewModel.selectedRecordType,
-                    selectedStatus: viewModel.selectedStatus,
-                    orderNoFilter: viewModel.orderNoFilter,
-                    startDate: viewModel.startDate,
-                    endDate: viewModel.endDate,
-                    showDateRange: viewModel.showDateRange,
-                    onRestaurantChanged: (restaurant) {
-                      if (restaurant != null) {
-                        viewModelNotifier.setSelectedRestaurant(
-                          restaurant.name,
-                        );
-                      }
-                    },
-                    onRecordTypeChanged:
-                        viewModelNotifier.setSelectedRecordType,
-                    onStatusChanged: viewModelNotifier.setSelectedStatus,
-                    onOrderNoChanged: viewModelNotifier.setOrderNoFilter,
-                    onStartDateChanged: viewModelNotifier.setStartDate,
-                    onEndDateChanged: viewModelNotifier.setEndDate,
-                    onApply: viewModelNotifier.applyFilters,
-                    onShowAll: viewModelNotifier.showAll,
+                    selectedRecordType: RecordType.last2DaysRecords,
+                    selectedStatus: OrderStatus.all,
+                    orderNoFilter: '',
+                    startDate: DateTime.now(),
+                    endDate: DateTime.now(),
+                    showDateRange: false,
+                    onRestaurantChanged: (_) {},
+                    onRecordTypeChanged: (_) {},
+                    onStatusChanged: (_) {},
+                    onOrderNoChanged: (_) {},
+                    onStartDateChanged: (_) {},
+                    onEndDateChanged: (_) {},
+                    onApply: () {},
+                    onShowAll: () {},
                   ),
                   // Data table header
                   const OnlineOrdersTableHeader(),
                   // Data table content
-                  OnlineOrdersDataTable(
-                    orders: onlineOrders,
-                    isLoading: viewModel.isLoading,
-                  ),
+                  OnlineOrdersDataTable(orders: onlineOrders, isLoading: false),
                 ],
               ),
             ),
@@ -223,25 +159,5 @@ class _OnlineOrdersPageState extends ConsumerState<OnlineOrdersPage> {
         ],
       ),
     );
-  }
-
-  /// Maps repository OrderStatus to UI OrderStatus
-  OrderStatus _mapOrderStatus(repo.OrderStatus status) {
-    switch (status) {
-      case repo.OrderStatus.pending:
-        return OrderStatus.waitingForAcceptance;
-      case repo.OrderStatus.confirmed:
-        return OrderStatus.accepted;
-      case repo.OrderStatus.preparing:
-        return OrderStatus.preparingFoodKotCreated;
-      case repo.OrderStatus.ready:
-        return OrderStatus.foodIsReady;
-      case repo.OrderStatus.completed:
-        return OrderStatus.delivered;
-      case repo.OrderStatus.cancelled:
-        return OrderStatus.all;
-      case repo.OrderStatus.all:
-        return OrderStatus.all;
-    }
   }
 }

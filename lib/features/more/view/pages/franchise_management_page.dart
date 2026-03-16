@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/franchise_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 
-class FranchiseManagementPage extends ConsumerStatefulWidget {
+class FranchiseManagementPage extends StatefulWidget {
   const FranchiseManagementPage({super.key});
 
   @override
-  ConsumerState<FranchiseManagementPage> createState() =>
+  State<FranchiseManagementPage> createState() =>
       _FranchiseManagementPageState();
 }
 
-class _FranchiseManagementPageState
-    extends ConsumerState<FranchiseManagementPage> {
+class _FranchiseManagementPageState extends State<FranchiseManagementPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _refIdController = TextEditingController();
 
@@ -33,14 +30,11 @@ class _FranchiseManagementPageState
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final viewModel = ref.watch(franchiseViewModelProvider);
-    final viewModelNotifier = ref.read(franchiseViewModelProvider.notifier);
-
     return CommonScaffold(
       activeItemId: 'franchise',
-      selectedOutlet: viewModel.selectedOutletName,
-      availableOutlets: viewModel.availableOutlets,
-      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: Column(
@@ -67,7 +61,7 @@ class _FranchiseManagementPageState
                     Align(
                       alignment: Alignment.center,
                       child: Text(
-                        'Showing 1 to ${viewModel.filteredFranchises.length} of ${viewModel.filteredFranchises.length} records',
+                        'Showing 1 to ${0} of ${0} records',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -119,8 +113,6 @@ class _FranchiseManagementPageState
   }
 
   Widget _buildFilterSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModelNotifier = ref.read(franchiseViewModelProvider.notifier);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -135,7 +127,7 @@ class _FranchiseManagementPageState
         const SizedBox(height: 8),
         TextField(
           controller: _nameController,
-          onChanged: viewModelNotifier.setNameFilter,
+          onChanged: (_) {},
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -167,7 +159,7 @@ class _FranchiseManagementPageState
         const SizedBox(height: 8),
         TextField(
           controller: _refIdController,
-          onChanged: viewModelNotifier.setRefIdFilter,
+          onChanged: (_) {},
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -194,7 +186,7 @@ class _FranchiseManagementPageState
             SizedBox(
               width: 120,
               child: ElevatedButton(
-                onPressed: viewModelNotifier.search,
+                onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
@@ -213,7 +205,7 @@ class _FranchiseManagementPageState
                 onPressed: () {
                   _nameController.clear();
                   _refIdController.clear();
-                  viewModelNotifier.showAll();
+                  () {}();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -235,9 +227,6 @@ class _FranchiseManagementPageState
   }
 
   Widget _buildDataTable(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(franchiseViewModelProvider);
-    final viewModelNotifier = ref.read(franchiseViewModelProvider.notifier);
-
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
@@ -291,7 +280,7 @@ class _FranchiseManagementPageState
             ),
           ),
           // Table rows
-          ...viewModel.filteredFranchises.map((franchise) {
+          ...const <dynamic>[].map((franchise) {
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -324,8 +313,7 @@ class _FranchiseManagementPageState
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: () =>
-                          viewModelNotifier.toggleLock(franchise.id),
+                      onPressed: () => () {}(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colorScheme.primary,
                         side: BorderSide(color: colorScheme.primary),

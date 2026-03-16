@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/reports_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 import 'sales_report_detail_page.dart';
 
-class ReportsPage extends ConsumerStatefulWidget {
+class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
 
   @override
-  ConsumerState<ReportsPage> createState() => _ReportsPageState();
+  State<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends ConsumerState<ReportsPage> {
+class _ReportsPageState extends State<ReportsPage> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() {
-      ref
-          .read(reportsViewModelProvider.notifier)
-          .setSearchQuery(_searchController.text);
+      () {}();
     });
   }
 
@@ -35,15 +31,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final state = ref.watch(reportsViewModelProvider);
 
     return CommonScaffold(
       activeItemId: 'reports',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(reportsViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: Column(
@@ -157,8 +150,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   Widget _buildFavoriteSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(reportsViewModelProvider);
-    final favoriteReports = state.favoriteReports;
+    final favoriteReports = null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -276,8 +268,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   Widget _buildReportsSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(reportsViewModelProvider);
-    final groupedReports = state.groupedReports;
+    final groupedReports = null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -319,7 +310,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   Widget _buildReportCard(
-    report,
+    dynamic report,
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
@@ -346,9 +337,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 ),
               ),
               GestureDetector(
-                onTap: () => ref
-                    .read(reportsViewModelProvider.notifier)
-                    .toggleFavorite(report.id),
+                onTap: () => () {}(),
                 child: Icon(
                   report.isFavorite ? Icons.star : Icons.star_border,
                   color: report.isFavorite

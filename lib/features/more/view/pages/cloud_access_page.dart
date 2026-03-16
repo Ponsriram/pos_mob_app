@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/cloud_access_viewmodel.dart';
 
 /// Cloud Access page
-class CloudAccessPage extends ConsumerStatefulWidget {
+class CloudAccessPage extends StatefulWidget {
   const CloudAccessPage({super.key});
 
   @override
-  ConsumerState<CloudAccessPage> createState() => _CloudAccessPageState();
+  State<CloudAccessPage> createState() => _CloudAccessPageState();
 }
 
-class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
+class _CloudAccessPageState extends State<CloudAccessPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
 
@@ -32,14 +30,11 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final viewModel = ref.watch(cloudAccessViewModelProvider);
-    final viewModelNotifier = ref.read(cloudAccessViewModelProvider.notifier);
-
     return CommonScaffold(
       activeItemId: 'cloud_access',
-      selectedOutlet: viewModel.selectedOutletName,
-      availableOutlets: viewModel.availableOutlets,
-      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -190,27 +185,21 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
         ),
       ],
       onSelected: (value) {
-        final viewModelNotifier = ref.read(
-          cloudAccessViewModelProvider.notifier,
-        );
         if (value == 'active') {
-          viewModelNotifier.setActiveStatus();
+          () {}();
         } else if (value == 'inactive') {
-          viewModelNotifier.setInactiveStatus();
+          () {}();
         }
       },
     );
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(cloudAccessViewModelProvider);
-    final viewModelNotifier = ref.read(cloudAccessViewModelProvider.notifier);
-
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: viewModelNotifier.toggleSearchExpanded,
+          onTap: () {},
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -240,9 +229,7 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  viewModel.isSearchExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                  Icons.keyboard_arrow_up,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -250,16 +237,12 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (viewModel.isSearchExpanded)
-          _buildSearchForm(colorScheme, textTheme),
+        _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(cloudAccessViewModelProvider);
-    final viewModelNotifier = ref.read(cloudAccessViewModelProvider.notifier);
-
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -276,7 +259,7 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _nameController,
-            onChanged: viewModelNotifier.setName,
+            onChanged: (_) {},
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -313,7 +296,7 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _emailController,
-            onChanged: viewModelNotifier.setEmail,
+            onChanged: (_) {},
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               hintText: '',
@@ -352,9 +335,9 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: viewModel.selectedType,
-            items: viewModel.types,
-            onChanged: viewModelNotifier.setSelectedType,
+            value: '',
+            items: const <String>[],
+            onChanged: (_) {},
           ),
           const SizedBox(height: 16),
           // Select Status dropdown
@@ -369,9 +352,9 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: viewModel.selectedStatus,
-            items: viewModel.statuses,
-            onChanged: viewModelNotifier.setSelectedStatus,
+            value: '',
+            items: const <String>[],
+            onChanged: (_) {},
           ),
           const SizedBox(height: 24),
           // Search and Show All buttons
@@ -379,7 +362,7 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  viewModelNotifier.search();
+                  () {}();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -405,7 +388,7 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
                 onPressed: () {
                   _nameController.clear();
                   _emailController.clear();
-                  viewModelNotifier.showAll();
+                  () {}();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -497,23 +480,7 @@ class _CloudAccessPageState extends ConsumerState<CloudAccessPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(cloudAccessViewModelProvider);
-
-    if (viewModel.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: colorScheme.primary),
-        ),
-      );
-    }
-
-    if (viewModel.users.isEmpty) {
-      return _buildEmptyState(colorScheme, textTheme);
-    }
-
-    // TODO: Build list of users
-    return const SizedBox.shrink();
+    return _buildEmptyState(colorScheme, textTheme);
   }
 
   Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {

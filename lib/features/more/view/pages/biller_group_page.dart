@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/biller_group_viewmodel.dart';
 
 /// Biller Group Management page
-class BillerGroupPage extends ConsumerStatefulWidget {
+class BillerGroupPage extends StatefulWidget {
   const BillerGroupPage({super.key});
 
   @override
-  ConsumerState<BillerGroupPage> createState() => _BillerGroupPageState();
+  State<BillerGroupPage> createState() => _BillerGroupPageState();
 }
 
-class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
+class _BillerGroupPageState extends State<BillerGroupPage> {
   late final TextEditingController _billerGroupNameController;
 
   @override
@@ -29,14 +27,11 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final viewModel = ref.watch(billerGroupViewModelProvider);
-    final viewModelNotifier = ref.read(billerGroupViewModelProvider.notifier);
-
     return CommonScaffold(
       activeItemId: 'biller_group',
-      selectedOutlet: viewModel.selectedOutletName,
-      availableOutlets: viewModel.availableOutlets,
-      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -132,14 +127,11 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(billerGroupViewModelProvider);
-    final viewModelNotifier = ref.read(billerGroupViewModelProvider.notifier);
-
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: viewModelNotifier.toggleSearchExpanded,
+          onTap: () {},
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -169,9 +161,7 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  viewModel.isSearchExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                  Icons.keyboard_arrow_up,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -179,16 +169,12 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (viewModel.isSearchExpanded)
-          _buildSearchForm(colorScheme, textTheme),
+        _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(billerGroupViewModelProvider);
-    final viewModelNotifier = ref.read(billerGroupViewModelProvider.notifier);
-
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -205,7 +191,7 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _billerGroupNameController,
-            onChanged: viewModelNotifier.setBillerGroupName,
+            onChanged: (_) {},
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -243,9 +229,9 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
           _buildSearchableDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: viewModel.selectedUserType,
-            items: viewModel.userTypes,
-            onChanged: viewModelNotifier.setSelectedUserType,
+            value: '',
+            items: const <String>[],
+            onChanged: (_) {},
           ),
           const SizedBox(height: 24),
           // Search and Show All buttons
@@ -253,7 +239,7 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  viewModelNotifier.search();
+                  () {}();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -278,7 +264,7 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
               OutlinedButton(
                 onPressed: () {
                   _billerGroupNameController.clear();
-                  viewModelNotifier.showAll();
+                  () {}();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -370,23 +356,7 @@ class _BillerGroupPageState extends ConsumerState<BillerGroupPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(billerGroupViewModelProvider);
-
-    if (viewModel.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: colorScheme.primary),
-        ),
-      );
-    }
-
-    if (viewModel.billerGroups.isEmpty) {
-      return _buildEmptyState(colorScheme, textTheme);
-    }
-
-    // TODO: Build list of biller groups
-    return const SizedBox.shrink();
+    return _buildEmptyState(colorScheme, textTheme);
   }
 
   Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {

@@ -1,22 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_app/features/auth/viewmodel/auth_viewmodel.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../dashboard/view/pages/dashboard_page.dart';
 
-class LoginPage extends ConsumerStatefulWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isRegisterMode = false;
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,23 +28,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    final notifier = ref.read(authViewModelProvider.notifier);
+    setState(() => _isLoading = true);
 
-    bool success;
-    if (_isRegisterMode) {
-      final name = _nameController.text.trim();
-      success = await notifier.signUp(
-        email: email,
-        password: password,
-        name: name,
-      );
-    } else {
-      success = await notifier.signIn(email: email, password: password);
-    }
+    // Simulate a brief delay for UX
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    if (success && mounted) {
+    if (mounted) {
+      setState(() => _isLoading = false);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardPage()),
@@ -57,20 +46,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
-    final authState = ref.watch(authViewModelProvider);
-
-    // Listen for errors to show snackbar
-    ref.listen(authViewModelProvider, (prev, next) {
-      if (next.error != null && prev?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: colorScheme.error,
-          ),
-        );
-        ref.read(authViewModelProvider.notifier).clearError();
-      }
-    });
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -86,7 +61,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     const SizedBox(height: 40),
                     _buildLogo(),
                     const SizedBox(height: 40),
-                    _buildLoginCard(authState),
+                    _buildLoginCard(),
                   ],
                 ),
               ),
@@ -144,7 +119,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget _buildLoginCard(AuthState authState) {
+  Widget _buildLoginCard() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -183,7 +158,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
             ),
             const SizedBox(height: 24),
-            // Name Input (register mode only)
             if (_isRegisterMode) ...[
               TextFormField(
                 controller: _nameController,
@@ -195,192 +169,102 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Full name',
-                  hintStyle: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: colorScheme.outline),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: colorScheme.outline),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: colorScheme.primary),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: colorScheme.error),
-                  ),
+                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.outline)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.outline)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary)),
+                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.error)),
                 ),
               ),
               const SizedBox(height: 16),
             ],
-            // Email Input
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your email';
-                }
+                if (value == null || value.trim().isEmpty) return 'Please enter your email';
                 final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                if (!emailRegex.hasMatch(value.trim())) {
-                  return 'Please enter a valid email';
-                }
+                if (!emailRegex.hasMatch(value.trim())) return 'Please enter a valid email';
                 return null;
               },
               decoration: InputDecoration(
                 hintText: 'Email address',
-                hintStyle: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 14,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.primary),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.outline)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.outline)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary)),
+                errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.error)),
               ),
             ),
             const SizedBox(height: 16),
-            // Password Input
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
-                }
-                if (_isRegisterMode && value.length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
+                if (value == null || value.isEmpty) return 'Please enter your password';
+                if (_isRegisterMode && value.length < 6) return 'Password must be at least 6 characters';
                 return null;
               },
               decoration: InputDecoration(
                 hintText: 'Password',
-                hintStyle: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 14,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePassword ? Icons.visibility_off : Icons.visibility,
                     color: colorScheme.onSurfaceVariant,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.primary),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: colorScheme.error),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.outline)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.outline)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.primary)),
+                errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: colorScheme.error)),
               ),
             ),
             const SizedBox(height: 16),
-            // Submit Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: authState.isLoading ? null : _handleSubmit,
+                onPressed: _isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   elevation: 0,
                 ),
-                child: authState.isLoading
+                child: _isLoading
                     ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            colorScheme.onPrimary,
-                          ),
+                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
                         ),
                       )
                     : Text(
                         _isRegisterMode ? 'Register' : 'Sign In',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
               ),
             ),
             const SizedBox(height: 20),
-            // Toggle register/login
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _isRegisterMode
-                        ? 'Already have an account? '
-                        : 'New in POS? ',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    _isRegisterMode ? 'Already have an account? ' : 'New in POS? ',
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _isRegisterMode = !_isRegisterMode;
-                      });
-                    },
+                    onTap: () => setState(() => _isRegisterMode = !_isRegisterMode),
                     child: Text(
                       _isRegisterMode ? 'Sign In' : 'Register',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.primary,
-                      ),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.primary),
                     ),
                   ),
                 ],
@@ -399,7 +283,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       child: Column(
         children: [
           Text(
-            '©2026 POS (Prayosha Food Services Pvt. Ltd.)',
+            '\u00a92026 POS (Prayosha Food Services Pvt. Ltd.)',
             style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
@@ -407,29 +291,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               GestureDetector(
-                onTap: () {
-                  // Handle privacy
-                },
-                child: Text(
-                  'Privacy',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                onTap: () {},
+                child: Text('Privacy', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
               ),
               const SizedBox(width: 16),
               GestureDetector(
-                onTap: () {
-                  // Handle terms & conditions
-                },
-                child: Text(
-                  'Terms & conditions',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                onTap: () {},
+                child: Text('Terms & conditions', style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
               ),
             ],
           ),

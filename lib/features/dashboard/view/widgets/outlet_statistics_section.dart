@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../model/outlet_stats_model.dart';
-import 'package:pos_app/core/repositories/dashboard_repository.dart';
+import 'package:pos_app/core/models/dashboard_models.dart';
 
 /// Section displaying outlet-wise statistics with scrollable tabs
 class OutletStatisticsSection extends StatelessWidget {
@@ -427,3 +427,4 @@ class OutletStatisticsSectionNew extends StatelessWidget {
     );
   }
 }
+

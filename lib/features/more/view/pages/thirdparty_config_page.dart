@@ -1,31 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/thirdparty_config_viewmodel.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
 
-class ThirdPartyConfigPage extends ConsumerStatefulWidget {
+class ThirdPartyConfigPage extends StatefulWidget {
   const ThirdPartyConfigPage({super.key});
 
   @override
-  ConsumerState<ThirdPartyConfigPage> createState() =>
+  State<ThirdPartyConfigPage> createState() =>
       _ThirdPartyConfigPageState();
 }
 
-class _ThirdPartyConfigPageState extends ConsumerState<ThirdPartyConfigPage> {
+class _ThirdPartyConfigPageState extends State<ThirdPartyConfigPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final state = ref.watch(thirdPartyConfigViewModelProvider);
 
     return CommonScaffold(
       activeItemId: 'thirdparty_config',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(thirdPartyConfigViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: Column(
@@ -483,3 +478,4 @@ class PuzzlePiecePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

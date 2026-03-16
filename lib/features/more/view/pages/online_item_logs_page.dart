@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/online_item_logs_viewmodel.dart';
 
 /// Online Item On/Off Logs page
-class OnlineItemLogsPage extends ConsumerStatefulWidget {
+class OnlineItemLogsPage extends StatefulWidget {
   const OnlineItemLogsPage({super.key});
 
   @override
-  ConsumerState<OnlineItemLogsPage> createState() => _OnlineItemLogsPageState();
+  State<OnlineItemLogsPage> createState() => _OnlineItemLogsPageState();
 }
 
-class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
+class _OnlineItemLogsPageState extends State<OnlineItemLogsPage> {
   late final TextEditingController _searchItemController;
 
   @override
@@ -30,16 +28,11 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
-    final viewModelNotifier = ref.read(
-      onlineItemLogsViewModelProvider.notifier,
-    );
-
     return CommonScaffold(
       activeItemId: 'online_item_logs',
-      selectedOutlet: viewModel.selectedOutlet,
-      availableOutlets: viewModel.availableOutlets,
-      onOutletSelected: viewModelNotifier.setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -147,16 +140,11 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
-    final viewModelNotifier = ref.read(
-      onlineItemLogsViewModelProvider.notifier,
-    );
-
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: viewModelNotifier.toggleSearchExpanded,
+          onTap: () {},
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -186,9 +174,7 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  viewModel.isSearchExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                  Icons.keyboard_arrow_up,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -196,18 +182,12 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (viewModel.isSearchExpanded)
-          _buildSearchForm(colorScheme, textTheme),
+        _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
-    final viewModelNotifier = ref.read(
-      onlineItemLogsViewModelProvider.notifier,
-    );
-
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -236,8 +216,8 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: viewModel.fromDate,
-            onDateSelected: viewModelNotifier.setFromDate,
+            date: DateTime.now(),
+            onDateSelected: (_) {},
           ),
           const SizedBox(height: 16),
           // To Date
@@ -252,8 +232,8 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: viewModel.toDate,
-            onDateSelected: viewModelNotifier.setToDate,
+            date: DateTime.now(),
+            onDateSelected: (_) {},
           ),
           const SizedBox(height: 16),
           // Select Outlet
@@ -268,9 +248,9 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
           _buildDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: viewModel.selectedOutletFilter,
-            items: viewModel.outlets,
-            onChanged: viewModelNotifier.setSelectedOutletFilter,
+            value: '',
+            items: const <String>[],
+            onChanged: (_) {},
           ),
           const SizedBox(height: 16),
           // Search ItemID / Name
@@ -284,7 +264,7 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _searchItemController,
-            onChanged: viewModelNotifier.setSearchItemIdName,
+            onChanged: (_) {},
             decoration: InputDecoration(
               hintText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -315,7 +295,7 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  viewModelNotifier.search();
+                  () {}();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -340,7 +320,7 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
               OutlinedButton(
                 onPressed: () {
                   _searchItemController.clear();
-                  viewModelNotifier.reset();
+                  () {}();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -371,8 +351,6 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
-    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
-
     return InkWell(
       onTap: () => _showRestaurantSelector(colorScheme, textTheme),
       child: Container(
@@ -385,7 +363,7 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
           children: [
             Expanded(
               child: Text(
-                viewModel.restaurantDisplayText,
+                '',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -411,11 +389,6 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final viewModel = ref.watch(onlineItemLogsViewModelProvider);
-            final viewModelNotifier = ref.read(
-              onlineItemLogsViewModelProvider.notifier,
-            );
-
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Column(
@@ -432,10 +405,10 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
                   const SizedBox(height: 16),
                   // All checkbox
                   CheckboxListTile(
-                    value: viewModel.isAllRestaurantsSelected,
+                    value: false,
                     onChanged: (value) {
                       setModalState(() {
-                        viewModelNotifier.toggleAllRestaurants();
+                        () {}();
                       });
                     },
                     title: Text(
@@ -449,14 +422,14 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
                   ),
                   const Divider(),
                   // Individual restaurant checkboxes
-                  ...(viewModel.restaurants.where(
-                    (r) => r != 'Please Select',
-                  )).map((restaurant) {
+                  ...(const <String>[].where((r) => r != 'Please Select')).map((
+                    restaurant,
+                  ) {
                     return CheckboxListTile(
-                      value: viewModel.selectedRestaurants.contains(restaurant),
+                      value: false,
                       onChanged: (value) {
                         setModalState(() {
-                          viewModelNotifier.toggleRestaurant(restaurant);
+                          () {}();
                         });
                       },
                       title: Text(
@@ -592,23 +565,7 @@ class _OnlineItemLogsPageState extends ConsumerState<OnlineItemLogsPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    final viewModel = ref.watch(onlineItemLogsViewModelProvider);
-
-    if (viewModel.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: colorScheme.primary),
-        ),
-      );
-    }
-
-    if (viewModel.logs.isEmpty) {
-      return _buildEmptyState(colorScheme, textTheme);
-    }
-
-    // TODO: Build list of logs
-    return const SizedBox.shrink();
+    return _buildEmptyState(colorScheme, textTheme);
   }
 
   Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {

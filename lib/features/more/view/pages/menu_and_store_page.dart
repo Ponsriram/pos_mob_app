@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
-import '../../viewmodel/menu_and_store_viewmodel.dart';
 
 /// Menu and Store Actions page
-class MenuAndStorePage extends ConsumerWidget {
+class MenuAndStorePage extends StatelessWidget {
   const MenuAndStorePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final state = ref.watch(menuAndStoreViewModelProvider);
 
     return CommonScaffold(
       activeItemId: 'thirdparty_config',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(menuAndStoreViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _MenuAndStoreBody(),
@@ -32,9 +27,9 @@ class MenuAndStorePage extends ConsumerWidget {
   }
 }
 
-class _MenuAndStoreBody extends ConsumerWidget {
+class _MenuAndStoreBody extends StatelessWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -172,3 +167,4 @@ class _MenuAndStoreBody extends ConsumerWidget {
     );
   }
 }
+

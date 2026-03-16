@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../model/dashboard_stats_model.dart';
-import 'package:pos_app/core/repositories/dashboard_repository.dart';
+import 'package:pos_app/core/models/dashboard_models.dart';
 import 'stat_card.dart';
 
 /// A grid widget displaying all dashboard statistics in a 2-column layout
@@ -222,3 +222,4 @@ class StatsGridNew extends StatelessWidget {
     );
   }
 }
+

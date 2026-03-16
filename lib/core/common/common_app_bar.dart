@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_app/core/providers/theme_provider.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:pos_app/features/dashboard/view/pages/notification_page.dart';
 
 /// Custom app bar for the dashboard screen
-class CommonAppBar extends ConsumerWidget implements PreferredSizeWidget {
+class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String selectedOutlet;
   final VoidCallback onMenuTap;
   final VoidCallback? onOutletTap;
@@ -24,9 +22,8 @@ class CommonAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final themeNotifier = ref.read(themeModeNotifierProvider.notifier);
 
     return AppBar(
       backgroundColor: colorScheme.surface,
@@ -35,7 +32,7 @@ class CommonAppBar extends ConsumerWidget implements PreferredSizeWidget {
       leading: _buildMenuButton(context, colorScheme),
       title: _buildOutletSelector(context, colorScheme),
       titleSpacing: 0,
-      actions: _buildActions(context, colorScheme, themeNotifier),
+      actions: _buildActions(context, colorScheme),
     );
   }
 
@@ -83,22 +80,16 @@ class CommonAppBar extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 
-  List<Widget> _buildActions(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ThemeModeNotifier themeNotifier,
-  ) {
+  List<Widget> _buildActions(BuildContext context, ColorScheme colorScheme) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return [
       IconButton(
         onPressed: () {
-          themeNotifier.toggleTheme();
+          // Theme toggle is a no-op without a state management layer
         },
         icon: Icon(
           isDark ? Icons.light_mode : Icons.dark_mode,
-          color: isDark
-              ? const Color(0xFFFFC107)
-              : colorScheme.onSurfaceVariant,
+          color: isDark ? const Color(0xFFFFC107) : colorScheme.onSurfaceVariant,
         ),
       ),
       IconButton(

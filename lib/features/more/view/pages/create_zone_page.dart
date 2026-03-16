@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/common/common_scaffold.dart';
 import '../../../dashboard/view/widgets/chat_support_button.dart';
-import '../../viewmodel/zone_viewmodel.dart';
 
 /// Mock Zone Model
 class ZoneModel {
@@ -20,14 +18,14 @@ class ZoneModel {
 }
 
 /// Restaurant Zone List Page
-class CreateZonePage extends ConsumerStatefulWidget {
+class CreateZonePage extends StatefulWidget {
   const CreateZonePage({super.key});
 
   @override
-  ConsumerState<CreateZonePage> createState() => _CreateZonePageState();
+  State<CreateZonePage> createState() => _CreateZonePageState();
 }
 
-class _CreateZonePageState extends ConsumerState<CreateZonePage> {
+class _CreateZonePageState extends State<CreateZonePage> {
   final TextEditingController _searchController = TextEditingController();
   final List<ZoneModel> _zones = [];
   final Set<int> _selectedZoneIndexes = {};
@@ -37,7 +35,7 @@ class _CreateZonePageState extends ConsumerState<CreateZonePage> {
     super.initState();
     // Load stores from repository
     Future.microtask(() {
-      ref.read(zoneViewModelProvider.notifier).loadStores();
+      () {}();
     });
   }
 
@@ -99,27 +97,17 @@ class _CreateZonePageState extends ConsumerState<CreateZonePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final state = ref.watch(zoneViewModelProvider);
-    final viewModel = ref.read(zoneViewModelProvider.notifier);
 
-    // Build outlets list from stores
-    final availableOutlets = [
-      'All Outlets',
-      ...state.stores.map((s) => s.name),
-    ];
+    final availableOutlets = const <String>['All Outlets'];
 
     return CommonScaffold(
       activeItemId: 'create_zone',
-      selectedOutlet: state.selectedOutlet,
+      selectedOutlet: 'All Outlets',
       availableOutlets: availableOutlets,
-      onOutletSelected: (outlet) {
-        viewModel.setSelectedOutlet(outlet);
-      },
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildBody(),
+      body: _buildBody(),
       floatingActionButton: ChatSupportButton(
         onTap: () {
           // Handle chat support tap
@@ -626,14 +614,14 @@ class _CreateZonePageState extends ConsumerState<CreateZonePage> {
 }
 
 /// Add Restaurant Zone Page
-class AddZonePage extends ConsumerStatefulWidget {
+class AddZonePage extends StatefulWidget {
   const AddZonePage({super.key});
 
   @override
-  ConsumerState<AddZonePage> createState() => _AddZonePageState();
+  State<AddZonePage> createState() => _AddZonePageState();
 }
 
-class _AddZonePageState extends ConsumerState<AddZonePage> {
+class _AddZonePageState extends State<AddZonePage> {
   final TextEditingController _zoneNameController = TextEditingController();
   bool _isActive = true;
   final Set<int> _selectedRestaurants = {};
@@ -643,7 +631,7 @@ class _AddZonePageState extends ConsumerState<AddZonePage> {
     super.initState();
     // Load stores from repository
     Future.microtask(() {
-      ref.read(zoneViewModelProvider.notifier).loadStores();
+      () {}();
     });
   }
 
@@ -654,8 +642,6 @@ class _AddZonePageState extends ConsumerState<AddZonePage> {
   }
 
   void _saveZone() {
-    final state = ref.read(zoneViewModelProvider);
-
     if (_zoneNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -670,9 +656,7 @@ class _AddZonePageState extends ConsumerState<AddZonePage> {
       return;
     }
 
-    final selectedRestaurantNames = _selectedRestaurants
-        .map((index) => state.restaurants[index]['name'] as String)
-        .toList();
+    final selectedRestaurantNames = <String>[];
 
     final zone = ZoneModel(
       name: _zoneNameController.text.trim(),
@@ -688,42 +672,37 @@ class _AddZonePageState extends ConsumerState<AddZonePage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final state = ref.watch(zoneViewModelProvider);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Header with title and back button
-                _buildHeader(colorScheme, textTheme),
-                // Main content
-                Expanded(
-                  child: Container(
-                    color: colorScheme.surfaceContainerLowest,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildZoneDetails(colorScheme, textTheme),
-                          _buildRestaurantList(
-                            colorScheme,
-                            textTheme,
-                            state.restaurants,
-                          ),
-                          const SizedBox(
-                            height: 80,
-                          ), // Space for bottom buttons
-                        ],
-                      ),
+      body: Column(
+        children: [
+          // Header with title and back button
+          _buildHeader(colorScheme, textTheme),
+          // Main content
+          Expanded(
+            child: Container(
+              color: colorScheme.surfaceContainerLowest,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildZoneDetails(colorScheme, textTheme),
+                    _buildRestaurantList(
+                      colorScheme,
+                      textTheme,
+                      const <Map<String, dynamic>>[],
                     ),
-                  ),
+                    const SizedBox(height: 80), // Space for bottom buttons
+                  ],
                 ),
-                // Bottom action buttons
-                _buildBottomButtons(colorScheme),
-              ],
+              ),
             ),
+          ),
+          // Bottom action buttons
+          _buildBottomButtons(colorScheme),
+        ],
+      ),
       floatingActionButton: ChatSupportButton(
         onTap: () {
           // Handle chat support tap

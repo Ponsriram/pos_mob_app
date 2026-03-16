@@ -1,31 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/common/common_scaffold.dart';
-import '../../viewmodel/online_store_logs_viewmodel.dart';
 
 /// Online Store Logs page
-class OnlineStoreLogsPage extends ConsumerStatefulWidget {
+class OnlineStoreLogsPage extends StatefulWidget {
   const OnlineStoreLogsPage({super.key});
 
   @override
-  ConsumerState<OnlineStoreLogsPage> createState() =>
-      _OnlineStoreLogsPageState();
+  State<OnlineStoreLogsPage> createState() => _OnlineStoreLogsPageState();
 }
 
-class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
+class _OnlineStoreLogsPageState extends State<OnlineStoreLogsPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final state = ref.watch(onlineStoreLogsViewModelProvider);
 
     return CommonScaffold(
       activeItemId: 'online_store_logs',
-      selectedOutlet: state.selectedOutlet,
-      availableOutlets: state.availableOutlets,
-      onOutletSelected: ref
-          .read(onlineStoreLogsViewModelProvider.notifier)
-          .setSelectedOutlet,
+      selectedOutlet: 'All Outlets',
+      availableOutlets: const ['All Outlets'],
+      onOutletSelected: (_) {},
       onLightBulbTap: () {},
       backgroundColor: colorScheme.surface,
       body: _buildBody(),
@@ -133,15 +127,11 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
   }
 
   Widget _buildSearchSection(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(onlineStoreLogsViewModelProvider);
-
     return Column(
       children: [
         // Search header (collapsible)
         InkWell(
-          onTap: ref
-              .read(onlineStoreLogsViewModelProvider.notifier)
-              .toggleSearchExpanded,
+          onTap: () {},
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -171,9 +161,7 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
                 ),
                 const Spacer(),
                 Icon(
-                  state.isSearchExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                  Icons.keyboard_arrow_up,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -181,15 +169,12 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
           ),
         ),
         // Search form (collapsible content)
-        if (state.isSearchExpanded) _buildSearchForm(colorScheme, textTheme),
+        _buildSearchForm(colorScheme, textTheme),
       ],
     );
   }
 
   Widget _buildSearchForm(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(onlineStoreLogsViewModelProvider);
-    final notifier = ref.read(onlineStoreLogsViewModelProvider.notifier);
-
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -218,8 +203,8 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: state.fromDate,
-            onDateSelected: notifier.setFromDate,
+            date: DateTime.now(),
+            onDateSelected: (_) {},
           ),
           const SizedBox(height: 16),
           // To Date
@@ -234,8 +219,8 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
           _buildDateField(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            date: state.toDate,
-            onDateSelected: notifier.setToDate,
+            date: DateTime.now(),
+            onDateSelected: (_) {},
           ),
           const SizedBox(height: 16),
           // Select Outlet
@@ -250,9 +235,9 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
           _buildDropdown(
             colorScheme: colorScheme,
             textTheme: textTheme,
-            value: state.selectedOutletFilter,
-            items: state.outlets,
-            onChanged: notifier.setSelectedOutletFilter,
+            value: '',
+            items: const <String>[],
+            onChanged: (_) {},
           ),
           const SizedBox(height: 24),
           // Search and Reset buttons
@@ -260,7 +245,7 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  notifier.search();
+                  () {}();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
@@ -284,7 +269,7 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
               const SizedBox(width: 12),
               OutlinedButton(
                 onPressed: () {
-                  ref.read(onlineStoreLogsViewModelProvider.notifier).reset();
+                  () {}();
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -315,8 +300,6 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
-    final state = ref.watch(onlineStoreLogsViewModelProvider);
-
     return InkWell(
       onTap: () => _showRestaurantSelector(colorScheme, textTheme),
       child: Container(
@@ -329,7 +312,7 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
           children: [
             Expanded(
               child: Text(
-                state.restaurantDisplayText,
+                'N/A',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -355,11 +338,6 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final state = ref.watch(onlineStoreLogsViewModelProvider);
-            final notifier = ref.read(
-              onlineStoreLogsViewModelProvider.notifier,
-            );
-
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Column(
@@ -376,10 +354,10 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
                   const SizedBox(height: 16),
                   // All checkbox
                   CheckboxListTile(
-                    value: state.isAllRestaurantsSelected,
+                    value: false,
                     onChanged: (value) {
                       setModalState(() {
-                        notifier.toggleAllRestaurants();
+                        () {}();
                       });
                     },
                     title: Text(
@@ -393,26 +371,26 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
                   ),
                   const Divider(),
                   // Individual restaurant checkboxes
-                  ...(state.restaurants.where((r) => r != 'Please Select')).map(
-                    (restaurant) {
-                      return CheckboxListTile(
-                        value: state.selectedRestaurants.contains(restaurant),
-                        onChanged: (value) {
-                          setModalState(() {
-                            notifier.toggleRestaurant(restaurant);
-                          });
-                        },
-                        title: Text(
-                          restaurant,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface,
-                          ),
+                  ...(const <String>[].where((r) => r != 'Please Select')).map((
+                    restaurant,
+                  ) {
+                    return CheckboxListTile(
+                      value: false,
+                      onChanged: (value) {
+                        setModalState(() {
+                          () {}();
+                        });
+                      },
+                      title: Text(
+                        restaurant,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
                         ),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                      );
-                    },
-                  ),
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    );
+                  }),
                   const SizedBox(height: 16),
                   // Done button
                   SizedBox(
@@ -536,23 +514,7 @@ class _OnlineStoreLogsPageState extends ConsumerState<OnlineStoreLogsPage> {
   }
 
   Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme) {
-    final state = ref.watch(onlineStoreLogsViewModelProvider);
-
-    if (state.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: colorScheme.primary),
-        ),
-      );
-    }
-
-    if (state.logs.isEmpty) {
-      return _buildEmptyState(colorScheme, textTheme);
-    }
-
-    // TODO: Build list of logs
-    return const SizedBox.shrink();
+    return _buildEmptyState(colorScheme, textTheme);
   }
 
   Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {
